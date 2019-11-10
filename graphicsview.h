@@ -25,8 +25,9 @@ public:
     void drawBackground(QPainter *p, const QRectF &rect) override;
     QSvgRenderer *renderer() const;
     QSize svgSize() const;
-    QImage outputBmp();
+    QImage outPutImage();
 
+    QImage  threshold(QImage image,double c);
     //Calculates and returns the bounding rect of all selected items on the scene
     QRectF selectItemsBoundingRect();
     void selectItemAtBox(QRectF rect);

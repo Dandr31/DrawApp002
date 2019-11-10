@@ -42,13 +42,19 @@ public:
     QGraphicsScene *scene() const;
 protected:
      void setEditingInProgress(bool state); 
+
      QPointF m_click_pos;
+
      QPointF m_cur_pos;
+
      QGraphicsScene *m_pScene;
 private:
     QCursor cursor;
+
     bool m_dragging                 = false;
+
     bool m_dragging_canceled        = false;
+
     bool m_editing_in_progress      = false;
 
 

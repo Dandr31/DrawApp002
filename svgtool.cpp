@@ -11,6 +11,7 @@ SvgTool::SvgTool(QGraphicsScene *scene):
   m_handle_rect=new QGraphicsRectItem(0);
   init();
 }
+
 void SvgTool::init()
 {
     if(!m_handle_rect)
@@ -19,9 +20,9 @@ void SvgTool::init()
         m_handles[i]=new HandleItem(m_handle_rect);
         m_handles[i]->setTag(i);
     }
-
-
 }
+
+
 void SvgTool::dragStart()
 {
     updateHoverState(m_click_pos);
@@ -35,6 +36,7 @@ void SvgTool::dragStart()
         startEditing(m_pScene->selectedItems());
 	}
 }
+
 void SvgTool::dragMove()
 {
      Q_ASSERT(m_pScene);
@@ -172,6 +174,7 @@ void SvgTool::dragMove()
 
 }
 
+
 void SvgTool::dragFinish()
 {
     if (editingInProgress())
@@ -185,6 +188,8 @@ void SvgTool::dragFinish()
 	}
     m_box_selection = false;
 }
+
+
 void SvgTool::drawSelectionRect()
 {
     QRectF rect;
@@ -196,38 +201,28 @@ void SvgTool::drawSelectionRect()
         m_pScene->addItem(m_selection_rect);
     }
 }
+
 void SvgTool::mouseMove()
 {
     Q_ASSERT(m_pScene);
 
   
 }
+
+//todo : select single item by clickpress
 void SvgTool::clickPress()
 {
   qDebug()<<"cur_pos"<<m_cur_pos<<"click press";
   updateHoverState(m_cur_pos);
-//  if(m_hover_state!=OverNothing){
-//      if(!m_hover_item||!m_selection_group){
-//          return;
-//      }
-//      for(QGraphicsItem * item :m_selection_group->childItems())
-//          m_selection_group->removeFromGroup(item);
-//      qDebug()<<"hover item"<<m_hover_item;
-//      m_selection_group->addToGroup(m_hover_item);
-//      if(!m_selection_group->scene()){
-//          if(!m_pScene)
-//              return;
-//          m_pScene->addItem(m_selection_group);
-//      }
-//      qDebug()<<"m_selection_group children"<<m_selection_group->childItems();
-//  }
 }
+
 void SvgTool::clickRelease()
 {
 
 }
- void SvgTool::startEditing(const QList<QGraphicsItem*> items)
- {
+
+void SvgTool::startEditing(const QList<QGraphicsItem*> items)
+{
      Q_UNUSED(items);
      Q_ASSERT(!editingInProgress());
      Q_ASSERT(m_hover_item);
@@ -240,6 +235,8 @@ void SvgTool::clickRelease()
 	 setEditingInProgress(true);
 
  }
+
+
  void SvgTool::updateHoverState(QPointF cur_pos)
  {
      Q_ASSERT(m_pScene);
@@ -272,6 +269,8 @@ void SvgTool::clickRelease()
      }
     qDebug()<<"HoverState"<<m_hover_state<<m_hover_item<<"type"<<m_hover_item->type();
  }
+
+
  void SvgTool::selectItemAtBox(QRectF rect)
 {
     if(!m_pScene||!m_selection_rect){
@@ -294,6 +293,7 @@ void SvgTool::clickRelease()
 
 }
 
+
 void SvgTool::updateSelectionGroup()
 {
     if(!m_pScene)
@@ -314,6 +314,7 @@ void SvgTool::updateSelectionGroup()
     updateHandleRect();
 
 }
+
 void SvgTool::emptySelectionGroup()
 {
      qDebug()<<"m_selection_group "<<m_selection_group<<m_selection_group->boundingRect();
@@ -334,6 +335,8 @@ void SvgTool::emptySelectionGroup()
 
 
 }
+
+
 void SvgTool::updateHandleRect()
 {
     if(!m_selection_group||!m_handle_rect){
@@ -372,11 +375,8 @@ void SvgTool::updateHandleRect()
         }
         m_handles[i]->setPos(pos-offset);
         m_handles[i]->setZValue(6);
-//        if(!m_handles[i]->scene()){
-//            m_pScene->addItem(m_handles[i]);
-//        }
     }
-    qDebug()<<m_selection_rect<<m_selection_rect->boundingRect();
+//    qDebug()<<m_selection_rect<<m_selection_rect->boundingRect();
     if(!m_handle_rect->scene()){
         if(!m_pScene)
             return;
@@ -385,11 +385,12 @@ void SvgTool::updateHandleRect()
     }
 
 }
+
+
 void SvgTool::updateHandleRect(QRectF t_rect,qreal angle){
 
      if(!m_selection_rect||!m_handle_rect)
           return;
-      QRectF last_rect = m_handle_rect->rect();
       QRectF b_rect = m_selection_group->boundingRect();
       //hanlde_rect
 
@@ -463,6 +464,7 @@ void SvgTool::updateHandleRect(QRectF t_rect,qreal angle){
 
 }
 
+//return the distance between two points
 qreal SvgTool::distance_points(QPointF p1,QPointF p2)
 {
     qreal detla_x = p1.x()-p2.x();
@@ -470,6 +472,7 @@ qreal SvgTool::distance_points(QPointF p1,QPointF p2)
     qreal distance = qSqrt(qPow(detla_x,2)+qPow(detla_y,2));
     return distance;
 }
+
 void SvgTool::deleteSelected()
 {
     if(!m_selection_group){
@@ -485,12 +488,15 @@ void SvgTool::deleteSelected()
         m_pScene->removeItem(item);
     }
 }
+//being used when move items
  void SvgTool::resetSelectionGroup()
  {
      if(!m_selection_group)
          return;
      QList<QGraphicsItem*> items = m_selection_group->childItems();
+
      emptySelectionGroup();
+
      for(QGraphicsItem* item:items){
          m_selection_group->addToGroup(item);
      }

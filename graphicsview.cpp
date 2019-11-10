@@ -60,7 +60,7 @@ GraphicsView::GraphicsView(QWidget *parent)
  tilePainter.end();
  setBackgroundBrush(tilePixmap);
  initDrawTool();
-openFile("F://start//QT//drawApp002//res//miku.svg");
+ openFile("F://start//QT//drawApp002//res//miku.svg");
 }
 void GraphicsView::initDrawTool()
 {
@@ -68,10 +68,10 @@ void GraphicsView::initDrawTool()
     resetTransform();
     scene()->setSceneRect(0,0,600,400);
     m_outlineItem = new QGraphicsRectItem(120,120,100,50);
-    m_outlineItem->setPen(QPen(Qt::black,2));
+    m_outlineItem->setPen(QPen(Qt::red,2));
 	m_outlineItem->setBrush(Qt::NoBrush);
 	m_outlineItem->setVisible(true);
-    m_outlineItem->setZValue(-1);
+    m_outlineItem->setZValue(1);
 
     m_outlineItem->setFlag(QGraphicsItem::ItemIsSelectable);
     m_backgroundItem = new QGraphicsRectItem(120,130,50,50);
@@ -95,9 +95,12 @@ void GraphicsView::initDrawTool()
 //    transform*=transform;
     m_backgroundItem->setTransform(transform);
     m_backgroundItem->setPen(QPen(Qt::black,1));;
-    m_backgroundItem->setZValue(-1);
+    m_backgroundItem->setZValue(1);
     m_backgroundItem->setFlag(QGraphicsItem::ItemIsSelectable);
     m_backgroundItem->setPos(100,100);
+
+
+
     scene()->addItem(m_backgroundItem);
     scene()->addItem(m_outlineItem);
     scene()->addItem(tem);
@@ -121,14 +124,22 @@ bool GraphicsView::openFile(const QString &fileName)
 //    s->clear();
 //    resetTransform();
 
+    QGraphicsTextItem *textItem = new QGraphicsTextItem(QString("Dandr 31"));
+//    textItem->
+    textItem->setFlag(QGraphicsItem::ItemIsSelectable);
+    QFont font("Helvetica [Cronyx]", 30,QFont::Bold);
+    textItem->setFont(font);
+    textItem->setTextWidth(200);
+
+
     m_svgItem = svgItem.take();
     m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
     m_svgItem->setCacheMode(QGraphicsItem::NoCache);
     m_svgItem->setZValue(0);
     m_svgItem->setFlag(QGraphicsItem::ItemIsSelectable);
-    s->addItem(m_svgItem);
-//  s->addItem(m_outlineItem);
-
+//    s->addItem(m_svgItem);
+//    s->addItem(m_outlineItem);
+//    s->addItem(textItem);
 //    s->setSceneRect(m_outlineItem->boundingRect().adjusted(-10, -10, 10, 10));
     return true;
 }
@@ -191,7 +202,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
     update();
     QGraphicsView::mouseReleaseEvent(event);
 }
-QImage GraphicsView::outputBmp()
+QImage GraphicsView::outPutImage()
 {
     if(m_pTool){
         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
@@ -211,15 +222,30 @@ void GraphicsView::test()
 {
 //   importSvg("F://start//QT//drawApp002//res//mikubig.svg");
 //   importSvg("F://start//QT//drawApp002//res//miku212.svg");
-   QImage image = outputBmp();
+   QImage image = outPutImage();
+//   qDebug()<<"QImage"<<image;
+//   qDebug()<<"QRgb"<<image.pixel(100,100)<<image.pixel(400,100);
+//   qDebug()<<qGray(image.pixel(100,100));
+//   if(m_outlineItem)
+//   {
+//       QColor c(Qt::cyan);
+//       qDebug()<<qGray(c.rgb())<<c.rgb()<<c;
+//       QColor g(qGray(c.rgb()),qGray(c.rgb()),qGray(c.rgb()));
+//       m_outlineItem->setPen(QPen(g,3));
+//   }
+
+   qreal cutoff=0.45;
+   int y ,x;
+   int h = image.height();
+   int w = image.width();
+   QImage new_image = threshold(image,cutoff);
    QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
-   QPixmap tempPixmap = QPixmap::fromImage(image);
+   QPixmap tempPixmap = QPixmap::fromImage(new_image);
    n_pixmap->setPixmap(tempPixmap);
-   n_pixmap->setScale(0.3);
+   n_pixmap->setScale(0.1);
+   n_pixmap->setPos(100,0);
    scene()->addItem(n_pixmap);
-   qDebug()<<"QImage"<<image;
-   qDebug()<<"QRgb"<<image.pixel(100,100)<<image.pixel(400,100);
-   qDebug()<<qGray(image.pixel(100,100));
+
 }
 bool GraphicsView::importSvg(const QString &fileName)
 {
@@ -306,4 +332,42 @@ void GraphicsView::selectItemAtBox(QRectF rect)
         }
     }
 
+}
+QImage  GraphicsView::threshold(QImage pImage,double c)
+{
+
+    int w=0, h=0;
+    double c1;
+    int x, y;
+    double p;
+    w=pImage.width();
+    h=pImage.height();
+    QImage new_image(w,h,QImage::Format_Grayscale8);
+     /* thresholding */
+    c1 = c * 255;
+    QRgb rgbVal = 0;
+    int grayVal = 0;
+    QColor new_color;
+
+    for (y=0; y<h; y++) {
+        for (x=0; x<w; x++) {
+          p = pImage.pixel(x,y);
+          rgbVal = pImage.pixel(x, y);
+          grayVal = qGray(rgbVal);
+
+          if(grayVal>=c1){
+              QColor white(Qt::white);
+              new_color = white;
+          }else{
+              QColor black(Qt::black);
+              new_color = black;
+          }
+          new_image.setPixel(x,y,new_color.rgb());
+//          new_image->setPixel(x,y,p<c1);
+//          new_image.setPixel(x,y,QColor(grayVal,grayVal,grayVal).rgb());
+        }
+      }
+
+
+    return new_image;
 }

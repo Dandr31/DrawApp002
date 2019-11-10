@@ -84,7 +84,7 @@ void MainWindow::exportImage()
     if (newPath.isEmpty())
           return;
     path = newPath;
-    QImage image = m_view->outputBmp();
+    QImage image = m_view->outPutImage();
     image.save(path,"BMP");
 }
 void MainWindow::exportGcode()
@@ -106,30 +106,18 @@ void MainWindow::exportGcode()
     QString svgPath =path.replace(no_suffixes,path.length()-1,".svg");
     QString gcodePath =path.replace(no_suffixes,path.length()-1,".gcode");
 
-    QImage image = m_view->outputBmp();
+    QImage image = m_view->outPutImage();
+//    QImage image("F://start//QT//res//miku.jpg");
     QFile* imageFile= new QFile(bmpPath);
     if(imageFile==nullptr)
         return;
-    //binary image
-    image.convertToFormat(QImage::Format_Grayscale8);
 
     int nWidth = image.width();
     int nHeight =image.height();
     QRgb rgbVal = 0;
     int grayVal = 0;
-    if(0){
-        for (int x = 0; x < nWidth; ++x)
-         {
-            for (int y = 0; y < nHeight; ++y)
-              {
-                   rgbVal = image.pixel(x, y);
+    image=m_view->threshold(image,0.45);
 
-                   grayVal = qGray(rgbVal);    // 这里调用Qt的函数，使用(R * 11 + G * 16 + B * 5)/32的方法计算
-
-                   image.setPixel(x, y, QColor(grayVal, grayVal, grayVal).rgb());
-             }
-         }
-    }
 
     image.save(imageFile,"bmp");
     imageFile->waitForReadyRead(1000);

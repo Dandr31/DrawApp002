@@ -20,6 +20,7 @@ void BaseTool::setEditingInProgress(bool state)
 		m_editing_in_progress = state;
 	}
 }
+
 void BaseTool::mousePositionEvent(QMouseEvent *event ,const QPointF scene_pos)
 {
     m_cur_pos =scene_pos;

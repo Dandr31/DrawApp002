@@ -85,8 +85,12 @@ void GraphicsView::initDrawTool()
     child->setPen(QPen(Qt::red,2));
     child->setPos(m_outlineItem->boundingRect().center());
     child->setParentItem(m_outlineItem);
-
-    QGraphicsRectItem *tem = new QGraphicsRectItem(70,80,50,50);
+    QImage new_image("F://start//QT//res//miku.jpg");
+    QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
+    QPixmap tempPixmap = QPixmap::fromImage(new_image);
+    n_pixmap->setPixmap(tempPixmap);
+    n_pixmap->setScale(0.1);
+    n_pixmap->setPos(0,0);
 
 //    QTransform transform2;
 //    transform2.translate(center.x(),center.y());
@@ -99,12 +103,12 @@ void GraphicsView::initDrawTool()
     m_backgroundItem->setFlag(QGraphicsItem::ItemIsSelectable);
     m_backgroundItem->setPos(100,100);
 
-
+    scene()->addItem(n_pixmap);
 
     scene()->addItem(m_backgroundItem);
     scene()->addItem(m_outlineItem);
-    scene()->addItem(tem);
     m_pTool = new SvgTool(scene());
+
 }
 QSize GraphicsView::svgSize() const
 {
@@ -214,15 +218,16 @@ QImage GraphicsView::outPutImage()
     m_scene->clearSelection();
     m_scene->render(&painter);
     painter.end();
-    image.save(path);
+//    image.save(path);
     return image;
 
 }
 void GraphicsView::test()
 {
-//   importSvg("F://start//QT//drawApp002//res//mikubig.svg");
+//   importSvg("F://start//QT//drawApp002//res//mikubpIg->svg");
 //   importSvg("F://start//QT//drawApp002//res//miku212.svg");
-   QImage image = outPutImage();
+//   QImage image = outPutImage();
+     QImage image("F://start//QT//res//miku.jpg");
 //   qDebug()<<"QImage"<<image;
 //   qDebug()<<"QRgb"<<image.pixel(100,100)<<image.pixel(400,100);
 //   qDebug()<<qGray(image.pixel(100,100));
@@ -238,13 +243,28 @@ void GraphicsView::test()
    int y ,x;
    int h = image.height();
    int w = image.width();
+   highpass(&image,4);
+//   lowpass(&image,4);
    QImage new_image = threshold(image,cutoff);
+//   new_image.save("F://start//QT//res//mikuQT.jpg");//work well
+//   QImage new_image=image.copy(0,0,w,h);
+   //show
+   QGraphicsView *show_view = new QGraphicsView();
+   QGraphicsScene *show_scene = new QGraphicsScene();
+   if(!show_view||!show_scene){
+       return;
+   }
+   show_scene->clear();
+   show_scene->setSceneRect(0,0,600,400);
+   show_view->setScene(show_scene);
+   show_view->setDragMode(ScrollHandDrag);
+   show_view->show();
+
    QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
    QPixmap tempPixmap = QPixmap::fromImage(new_image);
    n_pixmap->setPixmap(tempPixmap);
-   n_pixmap->setScale(0.1);
-   n_pixmap->setPos(100,0);
-   scene()->addItem(n_pixmap);
+   n_pixmap->setPos(0,0);
+   show_scene->addItem(n_pixmap);
 
 }
 bool GraphicsView::importSvg(const QString &fileName)
@@ -333,15 +353,15 @@ void GraphicsView::selectItemAtBox(QRectF rect)
     }
 
 }
-QImage  GraphicsView::threshold(QImage pImage,double c)
+QImage  GraphicsView::threshold(QImage image,double c)
 {
 
     int w=0, h=0;
     double c1;
     int x, y;
     double p;
-    w=pImage.width();
-    h=pImage.height();
+    w=image.width();
+    h=image.height();
     QImage new_image(w,h,QImage::Format_Grayscale8);
      /* thresholding */
     c1 = c * 255;
@@ -351,8 +371,8 @@ QImage  GraphicsView::threshold(QImage pImage,double c)
 
     for (y=0; y<h; y++) {
         for (x=0; x<w; x++) {
-          p = pImage.pixel(x,y);
-          rgbVal = pImage.pixel(x, y);
+          p = image.pixel(x,y);
+          rgbVal = image.pixel(x, y);
           grayVal = qGray(rgbVal);
 
           if(grayVal>=c1){
@@ -371,3 +391,111 @@ QImage  GraphicsView::threshold(QImage pImage,double c)
 
     return new_image;
 }
+/* apply lowpass filter (an approximate Gaussian blur) to greymap.
+   Lambda is the standard deviation of the kernel of the filter (i.e.,
+   the approximate filter radius). */
+static void lowpass(QImage *pIg, double lambda) {
+  double f, g;
+  double c, d;
+  double B;
+  int x, y;
+
+  if (pIg->height() == 0 || pIg->width() == 0) {
+    return;
+  }
+  //if lambda = 4 that d 0.390388 c 0.609612 B 1.125
+  /* calculate filter coefficients from given lambda */
+  B = 1+2/(lambda*lambda);
+  c = B-sqrt(B*B-1);
+  d = 1-c;
+  qDebug()<<"d"<<d<<"c"<<c<<"B"<<B;
+  for (y=0; y<pIg->height(); y++) {
+    /* apply low-pass filter to row y */
+    /* left-to-right */
+    f = g = 0;
+    for (x=0; x<pIg->width(); x++) {
+      f = f*c + qGray(pIg->pixel(x,y))*d;
+      g = g*c + f*d;
+      pIg->setPixel(x,y,QColor(g,g,g).rgb());
+    }
+
+    /* right-to-left */
+    for (x=pIg->width()-1; x>=0; x--) {
+      f = f*c +  qGray(pIg->pixel(x,y))*d;
+      g = g*c + f*d;
+      pIg->setPixel(x,y,QColor(g,g,g).rgb());
+    }
+
+    /* left-to-right mop-up */
+    for (x=0; x<pIg->width(); x++) {
+      f = f*c;
+      g = g*c + f*d;
+      if (f+g < 1/255.0) {
+    break;
+      }
+      double d=qGray( pIg->pixel(x,y))+g;
+      pIg->setPixel(x,y,QColor(d,d,d).rgb());
+    }
+  }
+  for (x=0; x<pIg->width(); x++) {
+     /* apply low-pass filter to column x */
+     /* bottom-to-top */
+     f = g = 0;
+     for (y=0; y<pIg->height(); y++) {
+       f = f*c + qGray(pIg->pixel(x,y))*d;
+       g = g*c + f*d;
+       pIg->setPixel(x,y,QColor(g,g,g).rgb());
+     }
+
+     /* top-to-bottom */
+     for (y=pIg->height()-1; y>=0; y--) {
+       f = f*c + qGray(pIg->pixel(x,y))*d;
+       g = g*c + f*d;
+       pIg->setPixel(x,y,QColor(g,g,g).rgb());
+     }
+
+     /* bottom-to-top mop-up */
+     for (y=0; y<pIg->height(); y++) {
+       f = f*c;
+       g = g*c + f*d;
+       if (f+g < 1/255.0) {
+           break;
+       }
+       double d = qGray(pIg->pixel(x,y))+g;
+       pIg->setPixel(x,y,QColor(d,d,d).rgb());
+     }
+   }
+ }
+
+/* apply highpass filter to greymap. Return 0 on success, 1 on error
+   with errno set. */
+static int highpass(QImage *pIg, double lambda) {
+  double f;
+  int x, y;
+  if(!pIg){
+      return 0;
+  }
+  if (pIg->width() == 0 ||pIg->height() == 0) {
+    return 0;
+  }
+
+  /* create a copy */
+  QImage ig1;
+  ig1 = pIg->copy(0,0,pIg->width(),pIg->height());
+
+  /* apply lowpass filter to the copy */
+  lowpass(&ig1, lambda);
+
+  /* subtract copy from original */
+  for (y=0; y<pIg->height(); y++) {
+    for (x=0; x<pIg->width(); x++) {
+      f = qGray(pIg->pixel(x,y));
+      f -= qGray(ig1.pixel(x,y));
+      f += 128;    /* normalize! */
+      pIg->setPixel(x,y,QColor(f,f,f).rgb());
+    }
+  }
+  return 0;
+}
+
+

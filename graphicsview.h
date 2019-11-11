@@ -9,7 +9,8 @@ class QSvgRenderer;
 class QWheelEvent;
 class QPaintEvent;
 QT_END_NAMESPACE
-
+static int highpass(QImage *pIg, double lambda);
+static void lowpass(QImage *pIg, double lambda);
 class GraphicsView : public QGraphicsView
 {
     Q_OBJECT

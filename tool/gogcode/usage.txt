@@ -1,0 +1,4 @@
+>>python gogcode.py
+svg path : F:\start\QT\drawApp002\tool\dolphin.svg
+out put svg path: F:\start\QT\drawApp002\tool\dolphin.gcode
+scaling factor [1.0] : 1

@@ -249,7 +249,8 @@ def transform(source_point, reverse=False):
 	#return [t[0][0]*x+t[0][1]*y+t[0][2], t[1][0]*x+t[1][1]*y+t[1][2]]#transform each points g.gcode
 	#return [t[1][1]*x+t[1][0]*y+t[0][2], t[0][1]*x+t[0][0]*y+t[1][2]]#transform each points gg.gcode
 	#return [t[0][0]*x+t[0][1]*y+t[0][2], t[0][1]*x+t[0][0]*y+t[1][2]]#transform each points ggg.gcode
-	return [(t[0][0]*x+t[0][1]*y+t[0][2])*gScale_factor, (t[0][1]*x+t[0][0]*y+t[1][2])*gScale_factor]#transform each points s*.gcode
+	#return [(t[0][0]*x+t[0][1]*y+t[0][2])*gScale_factor, (t[0][1]*x+t[0][0]*y+t[1][2])*gScale_factor]#transform each points s*.gcode
+	return [x*gScale_factor,y*gScale_factor];
 
 def transform_csp( csp_, reverse = False):
 		csp = [  [ [csp_[i][j][0][:],csp_[i][j][1][:],csp_[i][j][2][:]]  for j in range(len(csp_[i])) ]   for i in range(len(csp_)) ]
@@ -263,10 +264,6 @@ def parse_curve(p,w = None, f = None):
     if len(p)==0 : 
         return []
     p =transform_csp(p)
-#    p = self.transform_csp(p, layer)#transform all points  
-#    print("self.transform_csp \n")
-#    print(p)
-
     ### Sort to reduce Rapid distance	
     k = range(1,len(p))
     keys = [0]
@@ -322,7 +319,7 @@ gScale_factor = 1
 @click.option('--scale', prompt='scaling factor ', help='scaling factor ',default=1.0)
 def getd(file,output,scale):
     global gScale_factor
-    gScale_factor = scale
+    gScale_factor = scale*0.1# 0.1 is the deviation of gogcode
     outFile = output
     print("file",file,"output",output,"scale",scale)
     import xml.etree.ElementTree as ET
@@ -334,8 +331,8 @@ def getd(file,output,scale):
     print(type(dictD['d']) )
     go(d,output)
 
-def exportGcode(gcode,output):
-    f = open(output,'w')
+def exportGcode(gcode,outfile):
+    f = open(outfile,'w')
     f.write(gcode)
 
 if __name__ == '__main__':

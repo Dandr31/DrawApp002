@@ -3,6 +3,7 @@
 #include <QMenu>
 #include <QToolBar>
 #include <QTranslator>
+#include "imageprocess.h"
 static inline QString picturesLocation()
 {
     return QStandardPaths::standardLocations(QStandardPaths::PicturesLocation).value(0, QDir::currentPath());
@@ -14,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
 
       QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
       fileMenu->addAction(tr("&Open..."), this, &MainWindow::openFile);
+      fileMenu->addAction(tr("&Open Svg..."), this, &MainWindow::openSvg);
       fileMenu->addAction( tr("&Export..."), this, &MainWindow::exportImage);
       fileMenu->addAction( tr("&ExportGcode"), this, &MainWindow::exportGcode);
       fileMenu->addAction(tr("Language"), this, &MainWindow::language);
@@ -44,15 +46,26 @@ void MainWindow::openFile()
 {
     QFileDialog fileDialog(this);
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setMimeTypeFilters(QStringList() << "image/svg+xml" << "image/svg+xml-compressed");
-    fileDialog.setWindowTitle(tr("Open SVG File"));
+//    fileDialog.setMimeTypeFilters(QStringList() << "image/svg+xml" << "image/svg+xml-compressed");
+    fileDialog.setWindowTitle(tr("Open A File"));
     if (m_currentPath.isEmpty())
         fileDialog.setDirectory(picturesLocation());
 
     while (fileDialog.exec() == QDialog::Accepted && !loadFile(fileDialog.selectedFiles().constFirst()))
         ;
 }
+void MainWindow::openSvg()
+{
+    QFileDialog fileDialog(this);
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.setMimeTypeFilters(QStringList() << "image/svg+xml" << "image/svg+xml-compressed");
+    fileDialog.setWindowTitle(tr("Open SVG File"));
+    if (m_currentPath.isEmpty())
+        fileDialog.setDirectory(picturesLocation());
 
+    while (fileDialog.exec() == QDialog::Accepted && !m_view->importSvg(fileDialog.selectedFiles().constFirst()))
+        ;
+}
 bool MainWindow::loadFile(const QString &fileName)
 {
     if (!QFileInfo::exists(fileName) || !m_view->openFile(fileName)) {
@@ -106,19 +119,17 @@ void MainWindow::exportGcode()
     QString svgPath =path.replace(no_suffixes,path.length()-1,".svg");
     QString gcodePath =path.replace(no_suffixes,path.length()-1,".gcode");
 
-    QImage image = m_view->outPutImage();
-//    QImage image("F://start//QT//res//miku.jpg");
+//    QImage image = m_view->outPutImage();
+    QImage image("F://start//QT//res//miku.jpg");
     QFile* imageFile= new QFile(bmpPath);
     if(imageFile==nullptr)
         return;
 
     int nWidth = image.width();
     int nHeight =image.height();
-    QRgb rgbVal = 0;
-    int grayVal = 0;
-    image=m_view->threshold(image,0.45);
-
-
+    float cutoff =0.45;
+    process_highpass(&image,4);
+    process_threshold(&image,cutoff);
     image.save(imageFile,"bmp");
     imageFile->waitForReadyRead(1000);
     if(imageFile->exists()){

@@ -9,8 +9,6 @@ class QSvgRenderer;
 class QWheelEvent;
 class QPaintEvent;
 QT_END_NAMESPACE
-static int highpass(QImage *pIg, double lambda);
-static void lowpass(QImage *pIg, double lambda);
 class GraphicsView : public QGraphicsView
 {
     Q_OBJECT
@@ -23,12 +21,12 @@ public:
 
     bool openFile(const QString &fileName);
     bool importSvg(const QString &fileName);
+    bool importImage(const QString &fileName);
     void drawBackground(QPainter *p, const QRectF &rect) override;
     QSvgRenderer *renderer() const;
     QSize svgSize() const;
     QImage outPutImage();
 
-    QImage  threshold(QImage image,double c);
     //Calculates and returns the bounding rect of all selected items on the scene
     QRectF selectItemsBoundingRect();
     void selectItemAtBox(QRectF rect);

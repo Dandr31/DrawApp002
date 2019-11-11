@@ -30,6 +30,7 @@ SOURCES += \
         graphicsscene.cpp \
         graphicsview.cpp \
         handleitem.cpp \
+        imageprocess.cpp \
         main.cpp \
         mainwindow.cpp \
         svgtool.cpp
@@ -39,6 +40,7 @@ HEADERS += \
         graphicsscene.h \
         graphicsview.h \
         handleitem.h \
+        imageprocess.h \
         mainwindow.h \
         svgtool.h
 

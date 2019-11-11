@@ -14,6 +14,7 @@ public:
     bool loadFile(const QString &path);
 public slots:
        void openFile();
+       void openSvg();
        void exportImage();
        void exportGcode();
        void language();

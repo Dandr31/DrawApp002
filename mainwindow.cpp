@@ -15,8 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
 
       QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
       fileMenu->addAction(tr("&Open..."), this, &MainWindow::openFile);
-      fileMenu->addAction(tr("&Open Svg..."), this, &MainWindow::openSvg);
-      fileMenu->addAction( tr("&Export..."), this, &MainWindow::exportImage);
       fileMenu->addAction( tr("&ExportGcode"), this, &MainWindow::exportGcode);
       fileMenu->addAction(tr("Language"), this, &MainWindow::language);
       fileMenu->addAction(tr("E&xit"), qApp, QCoreApplication::quit);
@@ -54,22 +52,11 @@ void MainWindow::openFile()
     while (fileDialog.exec() == QDialog::Accepted && !loadFile(fileDialog.selectedFiles().constFirst()))
         ;
 }
-void MainWindow::openSvg()
-{
-    QFileDialog fileDialog(this);
-    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setMimeTypeFilters(QStringList() << "image/svg+xml" << "image/svg+xml-compressed");
-    fileDialog.setWindowTitle(tr("Open SVG File"));
-    if (m_currentPath.isEmpty())
-        fileDialog.setDirectory(picturesLocation());
 
-    while (fileDialog.exec() == QDialog::Accepted && !m_view->importSvg(fileDialog.selectedFiles().constFirst()))
-        ;
-}
 bool MainWindow::loadFile(const QString &fileName)
 {
     if (!QFileInfo::exists(fileName) || !m_view->openFile(fileName)) {
-        QMessageBox::critical(this, tr("Open SVG File"),
+        QMessageBox::critical(this, tr("Open A File"),
                               tr("Could not open file '%1'.").arg(QDir::toNativeSeparators(fileName)));
         return false;
     }
@@ -82,8 +69,6 @@ bool MainWindow::loadFile(const QString &fileName)
             tr("Opened %1, %2x%3").arg(QFileInfo(fileName).fileName()).arg(size.width()).arg(size.width());
         statusBar()->showMessage(message);
     }
-
-
     const QSize availableSize = QApplication::desktop()->availableGeometry(this).size();
     resize(m_view->sizeHint().expandedTo(availableSize / 4) + QSize(80, 80 + menuBar()->height()));
 
@@ -102,64 +87,21 @@ void MainWindow::exportImage()
 }
 void MainWindow::exportGcode()
 {
-
+    if(!m_view){
+        return;
+    }
     QString path;
-//    QString newPath = QFileDialog::getOpenFileName(this, tr("open bmp"),
-//                                 path, tr("bmp files (*.bmp)"));
-    QString newPath = QFileDialog::getSaveFileName(this,tr("save gcode"),
-                                                   path,tr("gcode files (*.gcode)"));
-
+    QString newPath = QFileDialog::getSaveFileName(this, tr("Save gcode"),
+             path, tr("gcode files (*.gcode)"));
     if (newPath.isEmpty())
           return;
-
     path = newPath;
-
-    int no_suffixes=path.lastIndexOf('.');
-    QString bmpPath =path.replace(no_suffixes,path.length()-1,".bmp");
-    QString svgPath =path.replace(no_suffixes,path.length()-1,".svg");
-    QString gcodePath =path.replace(no_suffixes,path.length()-1,".gcode");
-
-//    QImage image = m_view->outPutImage();
-    QImage image("F://start//QT//res//miku.jpg");
-    QFile* imageFile= new QFile(bmpPath);
-    if(imageFile==nullptr)
-        return;
-
-    int nWidth = image.width();
-    int nHeight =image.height();
-    float cutoff =0.45;
-    process_highpass(&image,4);
-    process_threshold(&image,cutoff);
-    image.save(imageFile,"bmp");
-    imageFile->waitForReadyRead(1000);
-    if(imageFile->exists()){
-        QProcess p(0);
-        QStringList arg1,arg2;
-        // potrace --svg --flat [filename]
-        QString applicationPath = QCoreApplication::applicationDirPath();
-        qDebug()<<"applicationPath"<<applicationPath;
-        //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
-
-        QString potrace= "F:/start/QT/drawApp/tool/potrace.exe";
-        arg1<< "--svg" << "--flat" <<bmpPath;
-        //gogcode --file [filename] --output [filename] --scale [float]
-        QString gogcode ="F:/start/QT/drawApp/tool/gogcode.exe";
-        arg2<< "--file"<<svgPath<<"--output"<<gcodePath<<"--scale"<< QString("0.01");
-
-        p.start(potrace,arg1);
-        qDebug()<<"process"<<potrace<<arg1;
-        p.waitForStarted();
-        p.waitForFinished();
-
-        p.start(gogcode,arg2);
-        qDebug()<<"process"<<gogcode<<arg2;
-        p.waitForStarted();
-        p.waitForFinished();
-        QString strTemp=QString::fromLocal8Bit(p.readAllStandardOutput());
-        qDebug()<<"process"<<strTemp;
+    statusBar()->showMessage(path);
+    if(!m_view->exportGcode(path)){
+        const QString message =tr("save gcode failed");
+        statusBar()->showMessage(message);
     }else{
-        qDebug()<<"imageFile is not exists";
+        return;
     }
-
 }
 

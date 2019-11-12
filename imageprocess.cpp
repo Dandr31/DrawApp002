@@ -47,20 +47,16 @@ QRgb grayToRgb(double f){
     /* left-to-right */
     f = g = 0;
     for (x=0; x<pIg->width(); x++) {
-      f = f*c + qGray(pIg->pixel(x,y))*d;
+      f = f*c + IG_UGET(pIg,x,y)*d;
       g = g*c + f*d;
-      if(!rangeCheck(g))
-          continue;
-      pIg->setPixel(x,y,grayToRgb(g));
+      IG_UPUT(pIg,x,y,g);
     }
 
     /* right-to-left */
     for (x=pIg->width()-1; x>=0; x--) {
-      f = f*c +  qGray(pIg->pixel(x,y))*d;
+      f = f*c + IG_UGET(pIg,x,y)*d;
       g = g*c + f*d;
-      if(!rangeCheck(g))
-          continue;
-      pIg->setPixel(x,y,grayToRgb(g));
+      IG_UPUT(pIg,x,y,g);
     }
 
     /* left-to-right mop-up */
@@ -70,10 +66,8 @@ QRgb grayToRgb(double f){
       if (f+g < 1/255.0) {
          break;
       }
-      double d=qGray( pIg->pixel(x,y))+g;
-      if(!rangeCheck(d))
-          continue;
-      pIg->setPixel(x,y,grayToRgb(d));
+      double d=IG_UGET(pIg,x,y)+g;
+      IG_UPUT(pIg,x,y,d);
     }
   }
   for (x=0; x<pIg->width(); x++) {
@@ -81,20 +75,16 @@ QRgb grayToRgb(double f){
      /* bottom-to-top */
      f = g = 0;
      for (y=0; y<pIg->height(); y++) {
-       f = f*c + qGray(pIg->pixel(x,y))*d;
+       f = f*c + IG_UGET(pIg,x,y)*d;
        g = g*c + f*d;
-       if(!rangeCheck(g))
-           continue;
-       pIg->setPixel(x,y,grayToRgb(g));
+       IG_UPUT(pIg,x,y,g);
      }
 
      /* top-to-bottom */
      for (y=pIg->height()-1; y>=0; y--) {
-       f = f*c + qGray(pIg->pixel(x,y))*d;
+       f = f*c + IG_UGET(pIg,x,y)*d;
        g = g*c + f*d;
-       if(!rangeCheck(g))
-           continue;
-       pIg->setPixel(x,y,grayToRgb(g));
+       IG_UPUT(pIg,x,y,g);
      }
 
      /* bottom-to-top mop-up */
@@ -104,10 +94,8 @@ QRgb grayToRgb(double f){
        if (f+g < 1/255.0) {
            break;
        }
-       double d = qGray(pIg->pixel(x,y))+g;
-       if(!rangeCheck(d))
-           continue;
-       pIg->setPixel(x,y,grayToRgb(d));
+       double d = IG_UGET(pIg,x,y)+g;
+       IG_UPUT(pIg,x,y,d);
      }
    }
  }
@@ -133,16 +121,15 @@ int process_highpass(QImage *pIg, double lambda) {
 
   /* subtract copy from original */
   int g;
-  for (y=0; y<pIg->height(); y++) {
-    for (x=0; x<pIg->width(); x++) {
-      f = qGray(pIg->pixel(x,y));
-      f -= qGray(ig1.pixel(x,y));
-      f += 128;    /* normalize! */
-      if(!rangeCheck(f))
-          continue;
-      pIg->setPixel(x,y,grayToRgb(f));
+  //use scanline //OK
+    for (y=0; y<pIg->height(); y++) {
+      for (x=0; x<pIg->width(); x++) {
+        f = IG_UGET(pIg,x,y);
+        f -= IG_UGET(&ig1,x,y);
+        f += 128;    /* normalize! */
+        IG_UPUT(pIg,x,y,f);
+      }
     }
-  }
   return 1;
 }
 
@@ -159,24 +146,17 @@ int process_threshold(QImage *pIg,double c)
     }
      /* thresholding */
     c1 = c * 255;
-    QRgb rgbVal = 0;
-    int grayVal = 0;
-    QColor new_color;
-
+    double g;
     for (y=0; y<h; y++) {
-        for (x=0; x<w; x++) {
-          p = pIg->pixel(x,y);
-          rgbVal = pIg->pixel(x, y);
-          grayVal = qGray(rgbVal);
-          if(grayVal>=c1){
-              QColor white(Qt::white);
-              new_color = white;
+      for (x=0; x<w; x++) {
+          g = IG_UGET(pIg,x,y);
+          if(g>=c1){
+             g=255;
           }else{
-              QColor black(Qt::black);
-              new_color = black;
+             g=0;
           }
-          pIg->setPixel(x,y,new_color.rgb());
-        }
+        IG_UPUT(pIg,x,y,g);
+       }
      }
     return true;
 }
@@ -282,16 +262,33 @@ QSvgRenderer * process_imageToSvg(const QString &fileName)
 
 
 }
-
+QString makeBitmap(const QString &fileName,double c)
+{
+    QImage image(fileName);
+    image = image.convertToFormat(QImage::Format_Grayscale8);
+    if(!process_highpass(&image))
+        return 0;
+    if(!process_threshold(&image,c))
+        return 0;
+    QString bmpPath = replaceSuffix(fileName,"bmp");
+    if(image.save(bmpPath)){
+        return bmpPath;
+    }
+    return 0;
+}
 //faster than Qt image Process
-QString makeBitmap(const QString &fileName)
+QString makeBitmapByPotrace(const QString &fileName)
 {
     QProcess p(0);
     QStringList arg1;
+    QFile bmpFile(fileName);
+    if(!bmpFile.exists()){
+        return 0;
+    }
     // potrace --svg --flat [filename
     //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
-    QString mkbitmap= "F:/start/QT/drawApp/tool/mkbitmap.exe";
-    arg1<< "--s" << " 1 " <<fileName;
+    QString mkbitmap= "F:/start/QT/drawApp002/tool/mkbitmap.exe";
+    arg1<< "--s" << "1" <<fileName;
     p.start(mkbitmap,arg1);
     p.waitForStarted();
     p.waitForFinished();
@@ -309,6 +306,19 @@ QString potrace(const QString &fileName)
     p.waitForStarted();
     p.waitForFinished();
     return replaceSuffix(fileName,"svg");
+}
+bool generateGcode(const QString &fileName)
+{
+    QProcess p(0);
+    QStringList arg;
+    // gogcode --file [filename.svg] --output [filename.gcode] --scale [n]
+    //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
+    QString gogcode= "F:/start/QT/drawApp002/tool/gogcode.exe";
+    arg<< "--file"<<replaceSuffix(fileName,"svg")<<"--output"<<replaceSuffix(fileName,"gcode");
+    p.start(gogcode,arg);
+    p.waitForStarted();
+    p.waitForFinished();
+    return true;
 }
 QString replaceSuffix(QString str,QString suf)
 {

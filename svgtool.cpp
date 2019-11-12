@@ -277,13 +277,14 @@ void SvgTool::startEditing(const QList<QGraphicsItem*> items)
         return;
     }
     QList<QGraphicsItem*> collidingItems=m_pScene->collidingItems(m_selection_rect);
+    qDebug()<<"collidingItems"<<collidingItems;
     if(collidingItems.count()>0){
         for (QGraphicsItem* item : collidingItems)
         {
             if(!item->isVisible())
                 continue;
-            if(item->type()!=QGraphicsRectItem::Type)
-                continue;
+//            if(item->type()==QGraphicsRectItem::Type)
+//                continue;
             item->setSelected(true);
         }
     }

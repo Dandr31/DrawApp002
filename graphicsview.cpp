@@ -10,32 +10,11 @@
 #include <qmath.h>
 #include <QSvgGenerator>
 #include <QBuffer>
+#include <QFileDialog>
+#include <QDateTime>
+#include <QProcess>
 #include "imageprocess.h"
 #include "svgtool.h"
- /*
- The m31 (dx) and m32 (dy) elements specify horizontal and vertical translation.
- The m11 and m22 elements specify horizontal and vertical scaling. The m21 and m12
- elements specify horizontal and vertical shearing. And finally, the m13 and m23
- elements specify horizontal and vertical projection, with m33 as an additional
- projection factor.
-*/
-QTransform GraphicsView::transform_set(int l,int n,QTransform o_transform,qreal value){
-    qreal m[4][4];
-    m[1][1] = o_transform.m11();
-    m[1][2] = o_transform.m12();
-    m[1][3]=  o_transform.m13();
-    m[2][1] = o_transform.m21();
-    m[2][2] = o_transform.m22();
-    m[2][3] = o_transform.m23();
-    m[3][1] = o_transform.m31();
-    m[3][2]=  o_transform.m32();
-    m[3][3] = o_transform.m33();
-    if(l>0&&l<4&&n>0&&n<4){
-        m[l][n]=value;
-    }
-    o_transform.setMatrix(m[1][1],m[1][2],m[1][3],m[2][1],m[2][2],m[2][3],m[3][1],m[3][2],m[3][3]);
-    return o_transform  ;
-}
 GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
@@ -43,24 +22,17 @@ GraphicsView::GraphicsView(QWidget *parent)
  , m_outlineItem(nullptr)
 
 {
- setScene(new QGraphicsScene(this));
- setTransformationAnchor(AnchorUnderMouse);
-// setDragMode(ScrollHandDrag);
- setViewportUpdateMode(FullViewportUpdate);
+    setScene(new QGraphicsScene(this));
 
-    m_scene =scene();
+    setTransformationAnchor(AnchorUnderMouse);
 
- // Prepare background check-board pattern
- QPixmap tilePixmap(64, 64);
- tilePixmap.fill(Qt::white);
- QPainter tilePainter(&tilePixmap);
- QColor color(220, 220, 220);
- tilePainter.fillRect(0, 0, 32, 32, color);
- tilePainter.fillRect(32, 32, 32, 32, color);
- tilePainter.end();
- setBackgroundBrush(tilePixmap);
- initDrawTool();
- openFile("F://start//QT//drawApp002//res//miku.svg");
+   // setDragMode(ScrollHandDrag);
+
+    setViewportUpdateMode(FullViewportUpdate);
+
+     m_scene =scene();
+
+     initDrawTool();
 }
 void GraphicsView::initDrawTool()
 {
@@ -105,8 +77,8 @@ void GraphicsView::initDrawTool()
 
 //    scene()->addItem(n_pixmap);
 
-    scene()->addItem(m_backgroundItem);
-    scene()->addItem(m_outlineItem);
+//    scene()->addItem(m_backgroundItem);
+//    scene()->addItem(m_outlineItem);
     m_pTool = new SvgTool(scene());
 
 }
@@ -117,36 +89,32 @@ QSize GraphicsView::svgSize() const
 bool GraphicsView::openFile(const QString &fileName)
 {
     QGraphicsScene *s = scene();
+    QString suffix =getSuffix(fileName);
+    if(suffix=="svg"){
+       return importSvg(fileName);
+    }else if(suffix=="jpg"||suffix=="png"){
+       QImage image(fileName);
+       if(image.width()==0){
+           return false;
+       }
+       image.convertTo(QImage::Format_Grayscale8);
+       QString bmpPath = replaceSuffix(fileName,"bmp");
+       image.save(bmpPath);
 
-    const bool drawBackground = (m_backgroundItem ? m_backgroundItem->isVisible() : false);
-    //const bool drawOutline = (m_outlineItem ? m_outlineItem->isVisible() : true);
-
+       return importImage(bmpPath);
+    }
+    /*
     QScopedPointer<QGraphicsSvgItem> svgItem(new QGraphicsSvgItem(fileName));
     if (!svgItem->renderer()->isValid())
         return false;
-
-//    s->clear();
-//    resetTransform();
-
-    QGraphicsTextItem *textItem = new QGraphicsTextItem(QString("Dandr 31"));
-    textItem->setScale(2);
-    textItem->setPos(200,100);
-    textItem->setFlag(QGraphicsItem::ItemIsSelectable);
-    QFont font("Helvetica [Cronyx]", 30,QFont::Bold);
-    textItem->setFont(font);
-    textItem->setTextWidth(200);
-
-
     m_svgItem = svgItem.take();
     m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
     m_svgItem->setCacheMode(QGraphicsItem::NoCache);
     m_svgItem->setZValue(0);
     m_svgItem->setFlag(QGraphicsItem::ItemIsSelectable);
-//    s->addItem(m_svgItem);
-//    s->addItem(m_outlineItem);
-    s->addItem(textItem);
-//    s->setSceneRect(m_outlineItem->boundingRect().adjusted(-10, -10, 10, 10));
-    return true;
+    s->addItem(m_svgItem);
+    */
+    return false;
 }
 void GraphicsView::drawBackground(QPainter *p, const QRectF &)
 {
@@ -161,6 +129,7 @@ void GraphicsView::paintEvent(QPaintEvent *event)
 {
     QGraphicsView::paintEvent(event);
 }
+
 void GraphicsView::setViewBackground(bool enable)
 {
     if (!m_backgroundItem)
@@ -209,27 +178,38 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 }
 QImage GraphicsView::outPutImage()
 {
+
     if(m_pTool){
         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
         svgTool->emptySelectionGroup();
     }
-    QImage image(m_scene->width(),m_scene->height() ,QImage::Format_ARGB32);
+
+    QImage image(m_scene->width(),m_scene->height() ,QImage::Format_Grayscale8);
+
     QPainter painter;
+
     painter.begin(&image);
+
     m_scene->clearSelection();
+
     m_scene->render(&painter);
+
     painter.end();
 //    image.save(path);
     return image;
 
 }
+
 void GraphicsView::test()
 {
+     exprotSvg("F://start//QT//res//output1112.svg");
+     return;
 //   importSvg("F://start//QT//drawApp002//res//mikubpIg->svg");
 //   importSvg("F://start//QT//drawApp002//res//miku212.svg");
 //   QImage image = outPutImage();
      QImage image("F://start//QT//res//miku.jpg");
-
+     makeBitmapByPotrace("C:/Users/Thinkpad/Pictures/timg.bmp");
+     return;
      //importSvg test
 //     importSvg("F://start//QT//res//1111miku2.svg");
 //     return;
@@ -260,8 +240,11 @@ void GraphicsView::test()
 //   new_image.save("F://start//QT//res//mikuQT.jpg");//work well
 //   QImage new_image=image.copy(0,0,w,h);
    //process_imageToSvg
-   QString bmpFile = makeBitmap("F://start//QT//res//mikuQT.jpg");
+   QString bmpFile = makeBitmapByPotrace("F://start//QT//res//mikuQT.jpg");
+
+//   QString bmpFile = makeBitmap("F://start//QT//res//mikuQT.jpg");
    QString svgFile = potrace(bmpFile);
+
    qDebug()<<"svgFile"<<svgFile;
    QSvgRenderer *pRenderer = process_svgResizeTo(svgFile,QSize(400,300));
    qDebug()<<"pRenderer"<<pRenderer->defaultSize();
@@ -271,7 +254,10 @@ void GraphicsView::test()
        return ;
    }
    pSvg->setSharedRenderer(pRenderer);
-
+   //convert to grayscale than process it
+//   QImage g_image("F://start//QT//res//mikuQT.jpg");
+//   g_image= g_image.convertToFormat(QImage::Format_Grayscale8);
+//   g_image.save("F://start//QT//res//mikuQT111209.bmp");
    //show
    QGraphicsView *show_view = new QGraphicsView();
    QGraphicsScene *show_scene = new QGraphicsScene();
@@ -291,15 +277,28 @@ void GraphicsView::test()
 //   show_scene->addItem(n_pixmap);
    show_scene->addItem(pSvg);
 }
+
 bool GraphicsView::importImage(const QString &fileName)
 {
-    QString bmpFile = makeBitmap(fileName);
-    QString svgFile = potrace(bmpFile);
-    qDebug()<<"svgFile"<<svgFile;
 
-    QSvgRenderer *pRenderer = process_svgResizeTo(svgFile,QSize(400,300));
+    QString bitmapPath = makeBitmapByPotrace(fileName);
+    qDebug()<<"bitmapPath"<<bitmapPath;
+    if(bitmapPath==0){
+        return false;
+    }
+    QFile bitmapFile(bitmapPath);
+    if(!bitmapFile.exists()){
+        return false;
+    }
+    qDebug()<<"bitmapFile"<<bitmapFile.fileName();
+    QString svgPath = potrace(bitmapPath);
+
+    qDebug()<<"svgFile"<<svgPath;
+
+    QSvgRenderer *pRenderer = process_svgResizeTo(svgPath,QSize(400,300));
 
     qDebug()<<"pRenderer"<<pRenderer->defaultSize();
+
     QGraphicsSvgItem *pSvg = new QGraphicsSvgItem();
 
     if(!pRenderer){
@@ -307,61 +306,134 @@ bool GraphicsView::importImage(const QString &fileName)
         return false ;
     }
     pSvg->setSharedRenderer(pRenderer);
+
+    pSvg->setFlag(QGraphicsItem::ItemIsSelectable);
+
     if(!pSvg->scene()){
         scene()->addItem(pSvg);
     }
+
+    QFile bmpFile(fileName);
+    if(bmpFile.exists()){
+        bmpFile.remove();
+    }
+    if(bitmapFile.exists()){
+        bitmapFile.remove();
+    }
+    QFile svgFile(svgPath);
+    if(svgFile.exists())
+        svgFile.remove();
     return true;
 }
+
 bool GraphicsView::importSvg(const QString &fileName)
 {
-        QSize size(200,200);
+        QSize size(m_max_import_width,m_max_import_height);
+
         QSvgRenderer *newRenderer = process_svgResizeTo(fileName,size);
+
         if(!newRenderer)
             return false;
+
         QGraphicsSvgItem *new_svg = new QGraphicsSvgItem();
+
         new_svg->setSharedRenderer(newRenderer);
+
         if(!new_svg)
             return false;
         if(!scene()){
             return false;
         }
         new_svg->setFlag(QGraphicsItem::ItemIsSelectable);
+
         scene()->addItem(new_svg);
+
         qDebug()<<"import miku boundingRect"<<new_svg->boundingRect();
+        return true;
 }
-QRectF GraphicsView::selectItemsBoundingRect()
-{
+
+bool GraphicsView::exportGcode(const QString &fileName){
+
     if(!scene()){
-        return QRectF();
+        return false;
     }
-    QList<QGraphicsItem *> selectedItems = scene()->selectedItems();
-    //todo add a selected limit
-    if ( selectedItems.count() >0 ){
-        QGraphicsItemGroup* pGroup=scene()->createItemGroup(scene()->selectedItems());
-        QRectF boundingRect = pGroup->boundingRect();
-        scene()->destroyItemGroup(pGroup);
-        return boundingRect;
+
+    if(scene()->items().count()==0){
+        return false;
+    }
+
+    if (fileName.isEmpty())
+           return false ;
+
+    QString bmpPath = replaceSuffix(fileName,"bmp");
+    //render scene to a image , QImage::Format_Grayscale8
+   QImage image = outPutImage();
+   QFile bmpFile(bmpPath);
+   if(image.save(bmpPath)){
+        qDebug()<<bmpPath;
+        qDebug()<<"save success";
+   }
+   if(bmpFile.exists()){
+       QProcess p(0);
+       QStringList arg1;
+       // potrace --svg --flat [filename
+       //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
+       QString mkbitmap= "F:/start/QT/drawApp002/tool/mkbitmap.exe";
+       arg1<< "--s" << "1" <<bmpPath;
+       p.start(mkbitmap,arg1);
+       p.waitForStarted();
+       p.waitForFinished();
+
+       QStringList arg2;
+       // potrace --svg --flat [filename
+       //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
+       QString potrace= "F:/start/QT/drawApp002/tool/potrace.exe";
+       arg2<< "--svg" << "--flat" <<replaceSuffix(bmpPath,"pbm");
+       p.start(potrace,arg2);
+       p.waitForStarted();
+       p.waitForFinished();
+
+       QStringList arg3;
+       // gogcode --file [filename.svg] --output [filename.gcode] --scale [n]
+       //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
+       QString gogcode= "F:/start/QT/drawApp002/tool/gogcode.exe";
+       arg3<< "--file"<<replaceSuffix(bmpPath,"svg")<<"--output"<<replaceSuffix(bmpPath,"gcode");
+       p.start(gogcode,arg3);
+       p.waitForStarted();
+       p.waitForFinished();
+
+    //  remove the  intermediate documents
+//       QFile bmpFile(bmpPath);
+//       if(bmpFile.exists()){
+//           bmpFile.remove();
+//       }
+//       QFile svgFile(replaceSuffix(bmpPath,"svg"));
+//       if(svgFile.exists())
+//            svgFile.remove();
+
+//       QFile pbmFile(replaceSuffix(bmpPath,"pbm"));
+//       if(pbmFile.exists())
+//           pbmFile.remove();
+
+    }else{
+           qDebug()<<"imageFile is not exists";
     }
 
 }
-void GraphicsView::selectItemAtBox(QRectF rect)
+bool GraphicsView::exprotSvg(const QString &fileName)
 {
-    if(!scene()){
-        return;
-    }
-    QList<QGraphicsItem*> items = scene()->items();
-    if(items.count()>0){
-        for (QGraphicsItem* item : items)
-        {
-            if(!item->isVisible())
-                continue;
-            if(item->type()!=QGraphicsRectItem::Type)
-                continue;
-            if (rect.intersects(item->boundingRect()) && item->boundingRect().intersects(rect))
-                item->setSelected(true);
-        }
-    }
-
+     QImage  image = outPutImage();
+     QSvgGenerator generator;
+     generator.setFileName(fileName);
+     generator.setSize(QSize(image.width(), image.height()));
+     generator.setViewBox(QRect(0, 0,image.width(), image.height()));
+     generator.setTitle(tr("SVG Generator Example Drawing"));
+     generator.setDescription(tr("An SVG drawing created by the SVG Generator "
+                                  "Example provided with Qt."));
+     QPainter painter;
+     painter.begin(&generator);
+     QRectF igRectF(0,0,image.width(),image.height());
+     painter.drawImage(igRectF,image,igRectF);
+     painter.end();
+     return true;
 }
-
-

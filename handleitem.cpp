@@ -3,6 +3,8 @@
 HandleItem::HandleItem(QGraphicsItem *parent):
     QGraphicsItem (parent)
 {
+    m_width=10;
+    m_height=10;
 
 }
 void HandleItem::setTag(int tag){
@@ -19,10 +21,10 @@ int HandleItem::getTag()
      Q_UNUSED(option);
      Q_UNUSED(widget);
      painter->setPen(QPen(Qt::blue,1));
-     painter->drawRect(0,0,8,8);
+     painter->drawRect(0,0,m_width,m_height);
  }
 QRectF HandleItem::boundingRect() const
 {
-    qreal adjust = 2;
-    return QRectF( 0-adjust, 0-adjust, 8 +adjust, 8+adjust);
+    qreal adjust = 0;
+    return QRectF( 0-adjust, 0-adjust, m_width +adjust, m_height+adjust);
 }

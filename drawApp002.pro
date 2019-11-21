@@ -33,6 +33,7 @@ SOURCES += \
         imageprocess.cpp \
         main.cpp \
         mainwindow.cpp \
+        selectionrectitem.cpp \
         svgtool.cpp
 
 HEADERS += \
@@ -42,6 +43,7 @@ HEADERS += \
         handleitem.h \
         imageprocess.h \
         mainwindow.h \
+        selectionrectitem.h \
         svgtool.h
 
 # Default rules for deployment.

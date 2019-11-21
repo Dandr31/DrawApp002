@@ -2,6 +2,7 @@
 #define SVGTOOL_H
 #include "basetool.h"
 #include <QGraphicsRectItem>
+#include "selectionrectitem.h"
 #include "handleitem.h"
 class SvgTool:public BaseTool
 {
@@ -34,17 +35,14 @@ public:
 
     void deleteSelected();
 
-    void resetSelectionGroup();
-
-    void emptySelectionGroup();
 
     void drawSelectionRect();
 
-    void updateHandleRect();
+    void updateSelection();
 
-    void updateHandleRect(QRectF rect,qreal angle);
+    void updateSelection(QRectF rect ,int angle);
 
-    void updateSelectionGroup();
+    void emptySelection();
 
     void updateHoverState(QPointF cur_pos);
 
@@ -54,7 +52,6 @@ public:
 
 protected:
 
-    HandleItem *m_handles[5];
 
     bool m_box_selection = false;
 
@@ -62,17 +59,18 @@ protected:
 
     HoverState m_hover_state =OverNothing;
 
-    QRectF m_selection_boundingRect;
-
-    QGraphicsItemGroup *m_selection_group;
-
     QPointF m_move_offset;
-
-    QGraphicsRectItem * m_handle_rect;
 
 private:
 
     QGraphicsRectItem *m_selection_rect;
+
+    //m_selection has a child only that is a QGraphicsItemGroup ,
+    //it's group has some childItems .So you can change the childeItems by
+    //invoking m_selection->setPos(),->setRect(),->setTransform()
+    SelectionRectItem *m_selection;
+
+
 
     int m_selection_angle;
 };

@@ -19,6 +19,8 @@ public:
      }
 private:
     int m_tag = Rotate;
+    int m_width ;
+    int m_height;
 };
 
 #endif // HANDLEITEM_H

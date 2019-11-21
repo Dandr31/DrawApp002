@@ -42,6 +42,7 @@ public slots:
 
      void test();
 
+     void testSelection();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -67,6 +68,15 @@ private:
     QImage m_image;
 
     QString path;
+    //robot's coordinate rect
+    QRect m_robot_rect;
+
+    //effective robot's coordinate rect
+    QRect m_working_rect;
+
+    QGraphicsRectItem *m_workingItem;
+
+    QGraphicsLineItem *m_xLineItem;
 
     int m_max_import_width=200;
 

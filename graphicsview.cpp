@@ -19,7 +19,9 @@ GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
  , m_backgroundItem(nullptr)
- , m_outlineItem(nullptr)
+ , m_workingItem(nullptr)
+ ,m_working_rect(QRect())
+ ,m_robot_rect(QRect())
 
 {
     setScene(new QGraphicsScene(this));
@@ -33,30 +35,36 @@ GraphicsView::GraphicsView(QWidget *parent)
      m_scene =scene();
 
      initDrawTool();
+
+     testSelection();
 }
 void GraphicsView::initDrawTool()
 {
     scene()->clear();
     resetTransform();
-    scene()->setSceneRect(0,0,600,400);
-    m_outlineItem = new QGraphicsRectItem(100,100,100,50);
-    m_outlineItem->setPen(QPen(Qt::red,2));
-	m_outlineItem->setBrush(Qt::NoBrush);
-	m_outlineItem->setVisible(true);
-    m_outlineItem->setZValue(1);
+    scene()->setSceneRect(0,0,700,300);
+    qreal padding = 20;
+    QRect paddingRect(padding,padding,scene()->width()-2*padding,scene()->height()-2*padding);
+    // working space
+    qreal robot_w = 640;
+    qreal robot_h = 160;
+    QPointF robot_orgin(paddingRect.center().x(),paddingRect.bottom()-220);
+    m_working_rect =QRect(robot_orgin.x()-robot_h*2,robot_orgin.y(),robot_w,robot_h);
+    m_robot_rect = QRect(m_working_rect.x(),m_working_rect.y(),robot_w,220);
+    m_workingItem = new QGraphicsRectItem(m_working_rect);
+    m_workingItem->setPen(QPen(Qt::cyan,1,Qt::DashLine));
+    m_workingItem->setBrush(Qt::NoBrush);
+    m_workingItem->setVisible(true);
+    m_workingItem->setZValue(1);
 
-    m_outlineItem->setFlag(QGraphicsItem::ItemIsSelectable);
-    m_backgroundItem = new QGraphicsRectItem(200,200,50,50);
-    QTransform transform=m_backgroundItem->transform();
-    QPointF center= m_backgroundItem->boundingRect().center();
-    transform.translate(center.x(),center.y());
-    transform.rotate(45);
-    transform.scale(2,3);
-    transform.translate(-center.x(),-center.y());
-    QGraphicsRectItem *child=new QGraphicsRectItem(0,0,3,3);
-    child->setPen(QPen(Qt::red,2));
-    child->setPos(m_outlineItem->boundingRect().center());
-    child->setParentItem(m_outlineItem);
+    QGraphicsRectItem *paddingItem = new QGraphicsRectItem(paddingRect);
+    paddingItem->setPen(QPen(Qt::black,1,Qt::DashLine));
+    //coordinate x and y line
+    m_xLineItem = new QGraphicsLineItem(paddingRect.center().x(),paddingRect.bottom(),paddingRect.center().x(),m_working_rect.bottom());
+    m_xLineItem->setPen(QPen(Qt::gray,1));
+
+    QGraphicsRectItem *robotItem = new QGraphicsRectItem(m_robot_rect);
+    robotItem->setPen(QPen(Qt::yellow,1));
     QImage new_image("F://start//QT//res//miku.jpg");
     QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
     QPixmap tempPixmap = QPixmap::fromImage(new_image);
@@ -69,16 +77,13 @@ void GraphicsView::initDrawTool()
 //    transform2.scale(2,3);
 //    transform2.translate(-center.x(),-center.y());
 //    transform*=transform;
-    m_backgroundItem->setTransform(transform);
-    m_backgroundItem->setPen(QPen(Qt::black,1));;
-    m_backgroundItem->setZValue(1);
-    m_backgroundItem->setFlag(QGraphicsItem::ItemIsSelectable);
-    m_backgroundItem->setPos(100,100);
-
 //    scene()->addItem(n_pixmap);
 
 //    scene()->addItem(m_backgroundItem);
-//    scene()->addItem(m_outlineItem);
+    scene()->addItem(paddingItem);
+    scene()->addItem(m_xLineItem);
+    scene()->addItem(robotItem);
+    scene()->addItem(m_workingItem);
     m_pTool = new SvgTool(scene());
 
 }
@@ -181,10 +186,15 @@ QImage GraphicsView::outPutImage()
 
     if(m_pTool){
         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
-        svgTool->emptySelectionGroup();
+        svgTool->emptySelection();
     }
-
-    QImage image(m_scene->width(),m_scene->height() ,QImage::Format_Grayscale8);
+    if(m_xLineItem){
+        m_xLineItem->setVisible(false);
+    }
+    if(m_workingItem){
+        m_workingItem->setVisible(false);
+    }
+    QImage image(scene()->width(),scene()->height() ,QImage::Format_Grayscale8);
 
     QPainter painter;
 
@@ -196,20 +206,43 @@ QImage GraphicsView::outPutImage()
 
     painter.end();
 //    image.save(path);
+    image = image.copy(m_robot_rect);
+
+    if(m_xLineItem){
+        m_xLineItem->setVisible(true);
+    }
+    if(m_workingItem){
+        m_workingItem->setVisible(true);
+    }
     return image;
 
 }
-
+void GraphicsView::testSelection()
+{
+      QGraphicsRectItem *rect1 = new QGraphicsRectItem(100,100,100,100);
+      QGraphicsRectItem *rect2 = new QGraphicsRectItem(130,130,20,20);
+      QGraphicsRectItem *rect3 = new QGraphicsRectItem(260,260,10,10);
+      if(!m_scene)
+          return;
+      rect1->setFlag(QGraphicsItem::ItemIsSelectable);
+      rect2->setFlag(QGraphicsItem::ItemIsSelectable);
+      rect3->setFlag(QGraphicsItem::ItemIsSelectable);
+      m_scene->addItem(rect1);
+      m_scene->addItem(rect2);
+      m_scene->addItem(rect3);
+}
 void GraphicsView::test()
 {
-     exprotSvg("F://start//QT//res//output1112.svg");
-     return;
+//     exprotSvg("F://start//QT//res//output1112.svg");
+//     return;
 //   importSvg("F://start//QT//drawApp002//res//mikubpIg->svg");
 //   importSvg("F://start//QT//drawApp002//res//miku212.svg");
-//   QImage image = outPutImage();
-     QImage image("F://start//QT//res//miku.jpg");
-     makeBitmapByPotrace("C:/Users/Thinkpad/Pictures/timg.bmp");
-     return;
+     QImage image = outPutImage();
+      image.save("F://start//QT//res//1115.jpg");
+      return;
+//     QImage image("F://start//QT//res//miku.jpg");
+//     makeBitmapByPotrace("C:/Users/Thinkpad/Pictures/timg.bmp");
+
      //importSvg test
 //     importSvg("F://start//QT//res//1111miku2.svg");
 //     return;
@@ -218,12 +251,12 @@ void GraphicsView::test()
 //   qDebug()<<"QImage"<<image;
 //   qDebug()<<"QRgb"<<image.pixel(100,100)<<image.pixel(400,100);
 //   qDebug()<<qGray(image.pixel(100,100));
-//   if(m_outlineItem)
+//   if(m_workingItem)
 //   {
 //       QColor c(288,288,288);
 //       qDebug()<<qGray(c.rgb())<<c.rgb()<<c;
 //       QColor g(qGray(c.rgb()),qGray(c.rgb()),qGray(c.rgb()));
-//       m_outlineItem->setPen(QPen(g,3));
+//       m_workingItem->setPen(QPen(g,3));
 //   }
 
    qreal cutoff=0.45;
@@ -397,7 +430,7 @@ bool GraphicsView::exportGcode(const QString &fileName){
        // gogcode --file [filename.svg] --output [filename.gcode] --scale [n]
        //F:/start/QT/build-drawApp-Desktop_Qt_5_13_0_MSVC2015_64bit-Debug/debug
        QString gogcode= "F:/start/QT/drawApp002/tool/gogcode.exe";
-       arg3<< "--file"<<replaceSuffix(bmpPath,"svg")<<"--output"<<replaceSuffix(bmpPath,"gcode");
+       arg3<< "--file"<<replaceSuffix(bmpPath,"svg")<<"--output"<<replaceSuffix(bmpPath,"gcode")<<"--scale"<<"0.5"<<"--dx"<<"-160"<<"--dy"<<"0";
        p.start(gogcode,arg3);
        p.waitForStarted();
        p.waitForFinished();

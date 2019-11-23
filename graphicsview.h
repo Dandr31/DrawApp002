@@ -1,7 +1,7 @@
 #ifndef GRAPHICSVIEW_H
 #define GRAPHICSVIEW_H
 #include "basetool.h"
-
+#include <QPainter>
 #include <QGraphicsView>
 QT_BEGIN_NAMESPACE
 class QGraphicsSvgItem;
@@ -35,6 +35,8 @@ public:
     bool exprotSvg(const QString &fileName);
 
     bool exportGcode(const QString &fileName);
+
+
 public slots:
      void setViewBackground(bool enable);
 
@@ -44,9 +46,12 @@ public slots:
 
      void testSelection();
 
+
 protected:
     void paintEvent(QPaintEvent *event) override;
+
 private:
+
     void initDrawTool();
 
     void mousePressEvent(QMouseEvent *event) override;
@@ -77,6 +82,8 @@ private:
     QGraphicsRectItem *m_workingItem;
 
     QGraphicsLineItem *m_xLineItem;
+
+    int m_background_zValue = -1;
 
     int m_max_import_width=200;
 

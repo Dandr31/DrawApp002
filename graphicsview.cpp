@@ -15,13 +15,12 @@
 #include <QProcess>
 #include "imageprocess.h"
 #include "svgtool.h"
+#include "tracer.h"
 GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
  , m_backgroundItem(nullptr)
  , m_workingItem(nullptr)
- ,m_working_rect(QRect())
- ,m_robot_rect(QRect())
 
 {
     setScene(new QGraphicsScene(this));
@@ -55,16 +54,18 @@ void GraphicsView::initDrawTool()
     m_workingItem->setPen(QPen(Qt::cyan,1,Qt::DashLine));
     m_workingItem->setBrush(Qt::NoBrush);
     m_workingItem->setVisible(true);
-    m_workingItem->setZValue(1);
-
+    m_workingItem->setZValue(m_background_zValue);
     QGraphicsRectItem *paddingItem = new QGraphicsRectItem(paddingRect);
     paddingItem->setPen(QPen(Qt::black,1,Qt::DashLine));
+    paddingItem->setZValue(m_background_zValue);
     //coordinate x and y line
     m_xLineItem = new QGraphicsLineItem(paddingRect.center().x(),paddingRect.bottom(),paddingRect.center().x(),m_working_rect.bottom());
     m_xLineItem->setPen(QPen(Qt::gray,1));
-
+    m_xLineItem->setZValue(m_background_zValue);
     QGraphicsRectItem *robotItem = new QGraphicsRectItem(m_robot_rect);
     robotItem->setPen(QPen(Qt::yellow,1));
+    robotItem->setZValue(m_background_zValue);
+
     QImage new_image("F://start//QT//res//miku.jpg");
     QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
     QPixmap tempPixmap = QPixmap::fromImage(new_image);
@@ -87,6 +88,7 @@ void GraphicsView::initDrawTool()
     m_pTool = new SvgTool(scene());
 
 }
+
 QSize GraphicsView::svgSize() const
 {
     return m_svgItem ? m_svgItem->boundingRect().size().toSize() : QSize();
@@ -125,10 +127,10 @@ void GraphicsView::drawBackground(QPainter *p, const QRectF &)
 {
      Q_UNUSED(p)
     //draw background in there
-//    p->save();
-//    p->resetTransform();
-//    p->drawTiledPixmap(viewport()->rect(), backgroundBrush().texture());
-//    p->restore();
+    p->save();
+    p->resetTransform();
+    p->drawTiledPixmap(viewport()->rect(), backgroundBrush().texture());
+    p->restore();
 }
 void GraphicsView::paintEvent(QPaintEvent *event)
 {
@@ -233,6 +235,22 @@ void GraphicsView::testSelection()
 }
 void GraphicsView::test()
 {
+    Tracer * tracer = new Tracer();
+    if(!tracer)
+          return;
+    /*Hancock*/
+    QString target_name = "haokan.svg";
+    QImage *pImage =new QImage("F:\\start\\QT\\res\\haokan.png");
+    QString target = "F:\\start\\QT\\selectionGroup\\res\\"+target_name;
+    if(tracer->traceToSvg(pImage,target)){
+           importSvg(target);
+//         QGraphicsSvgItem * new_svg = new QGraphicsSvgItem(target);
+//         if(!scene())
+//               return;
+//          new_svg->setScale(0.3);
+//          scene()->addItem(new_svg);
+    }
+    return;
 //     exprotSvg("F://start//QT//res//output1112.svg");
 //     return;
 //   importSvg("F://start//QT//drawApp002//res//mikubpIg->svg");

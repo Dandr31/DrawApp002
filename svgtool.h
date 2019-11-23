@@ -10,7 +10,7 @@ public:
     enum HoverState
         {
             OverNothing      = 0,
-            OverFrame        = 1,
+            OverSingleItem        = 1,
             OverHandle       = 3,
             OverSelected     =4
         };

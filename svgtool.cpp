@@ -274,7 +274,7 @@ void SvgTool::startEditing(const QList<QGraphicsItem*> items)
          qDebug()<<"HoverNothing"<<m_hover_state;
          return;
      }
-     qDebug()<<"hover item"<<new_hover_item<<new_hover_item->type();
+     qDebug()<<"hover item"<<new_hover_item<<new_hover_item->type()<<new_hover_item->zValue();
      if(new_hover_item->type()==HandleItem::Type){
          new_hover_state=OverHandle;
      }
@@ -286,6 +286,12 @@ void SvgTool::startEditing(const QList<QGraphicsItem*> items)
          }
 
      }
+     if(new_hover_state!=OverSelected&&new_hover_state!=OverHandle){
+         if(new_hover_item->zValue()>-1){
+             new_hover_state=OverSingleItem;
+         }
+     }
+
      if (new_hover_state  != m_hover_state  ||
         new_hover_item   != m_hover_item)
      {

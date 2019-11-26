@@ -238,6 +238,13 @@ void SvgTool::clickPress()
 {
   qDebug()<<"cur_pos"<<m_cur_pos<<"click press";
   updateHoverState(m_cur_pos);
+  if(m_hover_state==OverSingleItem){
+      if(!m_hover_item)
+          return;
+      emptySelection();
+      m_hover_item->setSelected(true);
+      updateSelection();
+  }
 }
 
 void SvgTool::clickRelease()
@@ -275,9 +282,11 @@ void SvgTool::startEditing(const QList<QGraphicsItem*> items)
          return;
      }
      qDebug()<<"hover item"<<new_hover_item<<new_hover_item->type()<<new_hover_item->zValue();
+     //if hover a handleitem
      if(new_hover_item->type()==HandleItem::Type){
          new_hover_state=OverHandle;
      }
+     //if hover a QGraphicsItem that is SelectionItem's child
      if(new_hover_item->parentItem()&&new_hover_state!=OverHandle){
          if(new_hover_item->parentItem()->type()==SelectionRectItem::Type){
              new_hover_state=OverSelected;
@@ -286,6 +295,7 @@ void SvgTool::startEditing(const QList<QGraphicsItem*> items)
          }
 
      }
+     //if hover a QGraphicsItem that is not SelectionItem's child or Handleitem
      if(new_hover_state!=OverSelected&&new_hover_state!=OverHandle){
          if(new_hover_item->zValue()>-1){
              new_hover_state=OverSingleItem;

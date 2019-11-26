@@ -32,10 +32,11 @@ public:
 
     QImage outPutImage();
 
+    bool isSceneEmpty();
+
     bool exprotSvg(const QString &fileName);
 
     bool exportGcode(const QString &fileName);
-
 
 public slots:
      void setViewBackground(bool enable);
@@ -44,7 +45,7 @@ public slots:
 
      void test();
 
-     void testSelection();
+     void test2();
 
 
 protected:

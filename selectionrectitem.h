@@ -52,6 +52,8 @@ private:
 
     QGraphicsRectItem *m_center;
 
+    QGraphicsLineItem *m_vertical_line;
+
     QPointF m_origin;
 
     QGraphicsItemGroup *m_group;

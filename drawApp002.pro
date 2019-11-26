@@ -30,7 +30,6 @@ SOURCES += \
         graphicsscene.cpp \
         graphicsview.cpp \
         handleitem.cpp \
-        imageprocess.cpp \
         main.cpp \
         mainwindow.cpp \
         potrace/curve.c \
@@ -40,14 +39,14 @@ SOURCES += \
         potrace/trace.c \
         selectionrectitem.cpp \
         svgtool.cpp \
-        tracer.cpp
+        tracer.cpp \
+        util.cpp
 
 HEADERS += \
         basetool.h \
         graphicsscene.h \
         graphicsview.h \
         handleitem.h \
-        imageprocess.h \
         mainwindow.h \
         potrace/auxiliary.h \
         potrace/bitmap.h \
@@ -60,7 +59,8 @@ HEADERS += \
         potrace/trace.h \
         selectionrectitem.h \
         svgtool.h \
-        tracer.h
+        tracer.h \
+        util.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

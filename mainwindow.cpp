@@ -3,7 +3,7 @@
 #include <QMenu>
 #include <QToolBar>
 #include <QTranslator>
-#include "imageprocess.h"
+#include "util.h"
 static inline QString picturesLocation()
 {
     return QStandardPaths::standardLocations(QStandardPaths::PicturesLocation).value(0, QDir::currentPath());

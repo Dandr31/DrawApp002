@@ -342,8 +342,6 @@ potrace_bitmap_t* Tracer::mkbitmap(QImage *pImage,double c)
             return 0;
     if(!threshold(&image,c))
             return 0;
-//    image.save("F:\\start\\QT\\selectionGroup\\res\\test1.bmp");
-
     return imageToBitmap(&image);
 
 }

@@ -1,4 +1,4 @@
-#include "imageprocess.h"
+#include "util.h"
 #include <QBuffer>
 #include <QSvgGenerator>
 #include <QPainter>

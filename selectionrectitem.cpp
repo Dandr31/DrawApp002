@@ -9,12 +9,15 @@ SelectionRectItem::SelectionRectItem(QGraphicsItem *parent)
 }
 void SelectionRectItem::init()
 {
+    m_vertical_line = new QGraphicsLineItem(this);
+    m_vertical_line->setVisible(false);
+    m_vertical_line->setPen(QPen(Qt::cyan,1));
     for(int i=0;i<5;i++){
           m_handles[i]=new HandleItem(this);
           m_handles[i]->setTag(i);
           m_handles[i]->setVisible(false);
     }
-    this->setPen(QPen(Qt::cyan,1,Qt::DashLine));
+    this->setPen(QPen(Qt::cyan,1));
     this->setZValue(6);
 
     m_center = new QGraphicsRectItem(0,0,5,5);
@@ -264,6 +267,18 @@ void SelectionRectItem::updateHandles()
              m_handles[i]->setPos(pos-offset);
              m_handles[i]->setZValue(6);
          }
+    if(m_vertical_line){
+        QLine line(rect.center().x(),rect.top(),rect.center().x(),rect.top()-rect.height()*0.3);
+        m_vertical_line->setLine(line);
+
+        if(rect.width()<2||rect.height()<2){
+                m_vertical_line->setVisible(false);
+         }else{
+                m_vertical_line->setVisible(true);
+         }
+    }
+
+
     if(!m_center)
         return;
 

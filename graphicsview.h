@@ -24,7 +24,6 @@ public:
 
     bool importImage(const QString &fileName);
 
-    void drawBackground(QPainter *p, const QRectF &rect) override;
 
     QSvgRenderer *renderer() const;
 

@@ -42,7 +42,8 @@ void GraphicsView::initDrawTool()
     scene()->clear();
     resetTransform();
     scene()->setSceneRect(0,0,700,300);
-    qreal padding = 20;
+
+    int padding = 20;
     QRect paddingRect(padding,padding,scene()->width()-2*padding,scene()->height()-2*padding);
     // working space
     qreal robot_w = 640;
@@ -95,7 +96,6 @@ QSize GraphicsView::svgSize() const
 }
 bool GraphicsView::openFile(const QString &fileName)
 {
-    QGraphicsScene *s = scene();
     QString suffix =getSuffix(fileName);
     if(suffix=="svg"){
        return importSvg(fileName);
@@ -115,15 +115,7 @@ bool GraphicsView::openFile(const QString &fileName)
     */
     return false;
 }
-void GraphicsView::drawBackground(QPainter *p, const QRectF &)
-{
-     Q_UNUSED(p)
-    //draw background in there
-    p->save();
-    p->resetTransform();
-    p->drawTiledPixmap(viewport()->rect(), backgroundBrush().texture());
-    p->restore();
-}
+
 void GraphicsView::paintEvent(QPaintEvent *event)
 {
     QGraphicsView::paintEvent(event);
@@ -177,6 +169,8 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 }
 QImage GraphicsView::outPutImage()
 {
+    //bug:cant render correct image when use  release
+    //but debug can render
 
     if(m_pTool){
         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
@@ -193,7 +187,9 @@ QImage GraphicsView::outPutImage()
         return emptyImage;
     }
 
-    QImage image(scene()->width(),scene()->height() ,QImage::Format_Grayscale8);
+    QImage image(scene()->width(),scene()->height(),QImage::Format_Grayscale8);
+
+    image.fill(Qt::white);//if not use it ,will create black picture in release
 
     QPainter painter;
 
@@ -204,8 +200,8 @@ QImage GraphicsView::outPutImage()
     m_scene->render(&painter);
 
     painter.end();
-//    image.save(path);
-    image = image.copy(m_robot_rect);
+
+    image = image.copy( m_robot_rect.adjusted(1,1,-1,-1));
 
     if(m_xLineItem){
         m_xLineItem->setVisible(true);
@@ -222,6 +218,8 @@ void GraphicsView::test2()
 }
 void GraphicsView::test()
 {
+
+
 }
 
 bool GraphicsView::importImage(const QString &fileName)
@@ -281,7 +279,7 @@ bool GraphicsView::exportGcode(const QString &fileName)
      QImage image = outPutImage();
      if(image.width()==0||image.height()==0)
          return false;
-//     qDebug()<<"export target"<<fileName;
+
      QString svgPath=replaceSuffix(fileName,"svg");
      //convert the image to svg by traceToSvg();
      if(tracer->traceToSvg(&image,svgPath)){

@@ -69,8 +69,8 @@ bool MainWindow::loadFile(const QString &fileName)
             tr("Opened %1, %2x%3").arg(QFileInfo(fileName).fileName()).arg(size.width()).arg(size.width());
         statusBar()->showMessage(message);
     }
-    const QSize availableSize = QApplication::desktop()->availableGeometry(this).size();
-    resize(m_view->sizeHint().expandedTo(availableSize / 4) + QSize(80, 80 + menuBar()->height()));
+//    const QSize availableSize = QApplication::desktop()->availableGeometry(this).size();
+//    resize(m_view->sizeHint().expandedTo(availableSize / 4) + QSize(80, 80 + menuBar()->height()));
 
     return true;
 }

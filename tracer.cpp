@@ -19,8 +19,10 @@ bool Tracer::traceToSvg(QImage *pImage,const QString &filename)
     potrace_bitmap_t *bm;
     potrace_param_t *param;
     potrace_state_t *st;
-
-    bm = mkbitmap(pImage,0.45);
+    QImage image = pImage->convertToFormat(QImage::Format_Grayscale8);
+//    bm = mkbitmap(pImage,0.45);
+    bm = imageToBitmap(grayMapCanny(&image,0.1,0.65));
+//    getInvertBm(bm);
     if(!bm){
         qDebug()<<"bm==0";
         return 0;
@@ -30,7 +32,7 @@ bool Tracer::traceToSvg(QImage *pImage,const QString &filename)
     if (!param) {
       return 0;
     }
-    param->turdsize = 0;
+//    param->turdsize = 0;
 
     /* trace the bitmap */
     st = potrace_trace(param, bm);
@@ -499,4 +501,206 @@ potrace_state_t * Tracer::traceToPath( potrace_param_t *param,potrace_bitmap_t *
          return 0;
     }
     return st;
+}
+
+/*#########################################################################
+### C A N N Y    E D G E    D E T E C T I O N
+#########################################################################*/
+
+
+static int sobelX[] =
+{
+    -1,  0,  1 ,
+    -2,  0,  2 ,
+    -1,  0,  1
+};
+
+static int sobelY[] =
+{
+     1,  2,  1 ,
+     0,  0,  0 ,
+    -1, -2, -1
+};
+
+
+
+/**
+ * Perform Sobel convolution on a GrayMap
+ */
+QImage * Tracer::grayMapSobel(QImage *pImage,
+               double dLowThreshold, double dHighThreshold)
+{
+    int width  = pImage->width();
+    int height = pImage->height();
+    int firstX = 1;
+    int lastX  = width-2;
+    int firstY = 1;
+    int lastY  = height-2;
+
+    QImage *newIg = new QImage(width,height,QImage::Format_Grayscale8);
+    if (!newIg)
+        return NULL;
+
+    for (int y = 0 ; y<height ; y++)
+        {
+        for (int x = 0 ; x<width ; x++)
+            {
+            unsigned long sum = 0;
+        /* image boundaries */
+            if (x<firstX || x>lastX || y<firstY || y>lastY)
+                {
+                sum = 0;
+                }
+            else
+                {
+                /* ### SOBEL FILTERING #### */
+                long sumX = 0;
+                long sumY = 0;
+                int sobelIndex = 0;
+                for (int i= y-1 ; i<=y+1 ; i++)
+                    {
+                    for (int j= x-1; j<=x+1 ; j++)
+                        {
+                        sumX += IG_UGET(pImage, j, i) *
+                             sobelX[sobelIndex++];
+                }
+                }
+
+                sobelIndex = 0;
+                for (int i= y-1 ; i<=y+1 ; i++)
+                    {
+                    for (int j= x-1; j<=x+1 ; j++)
+                        {
+                        sumY += IG_UGET(pImage, j, i) *
+                             sobelY[sobelIndex++];
+                }
+                }
+                /*###  GET VALUE ### */
+                sum = abs(sumX) + abs(sumY);
+
+                if (sum > 255)
+                    sum = 255;
+
+                /*###  GET EDGE DIRECTION (fast way) ### */
+                int edgeDirection = 0; /*x,y=0*/
+                if (sumX==0)
+                    {
+                    if (sumY!=0)
+                        edgeDirection = 90;
+                    }
+                else
+                   {
+                   /*long slope = sumY*1024/sumX;*/
+                   long slope = (sumY << 10)/sumX;
+                   if (slope > 2472 || slope< -2472)  /*tan(67.5)*1024*/
+                       edgeDirection = 90;
+                   else if (slope > 414) /*tan(22.5)*1024*/
+                       edgeDirection = 45;
+                   else if (slope < -414) /*-tan(22.5)*1024*/
+                       edgeDirection = 135;
+                   }
+
+                /* printf("%ld %ld %f %d\n", sumX, sumY, orient, edgeDirection); */
+
+                /*### Get two adjacent pixels in edge direction ### */
+                unsigned long leftPixel;
+                unsigned long rightPixel;
+                if (edgeDirection == 0)
+                    {
+                    leftPixel  = IG_UGET(pImage, x-1, y);
+                    rightPixel = IG_UGET(pImage, x+1, y);
+                    }
+                else if (edgeDirection == 45)
+                    {
+                    leftPixel  = IG_UGET(pImage, x-1, y+1);
+                    rightPixel = IG_UGET(pImage, x+1, y-1);
+                    }
+                else if (edgeDirection == 90)
+                    {
+                    leftPixel  = IG_UGET(pImage, x, y-1);
+                    rightPixel = IG_UGET(pImage, x, y+1);
+                    }
+                else /*135 */
+                    {
+                    leftPixel  = IG_UGET(pImage, x-1, y-1);
+                    rightPixel = IG_UGET(pImage, x+1, y+1);
+                    }
+
+                /*### Compare current value to adjacent pixels ### */
+                /*### if less that either, suppress it ### */
+                if (sum < leftPixel || sum < rightPixel)
+                    sum = 0;
+                else
+                    {
+                    unsigned long highThreshold =
+                          (unsigned long)(dHighThreshold * 255.0);
+                    unsigned long lowThreshold =
+                          (unsigned long)(dLowThreshold * 255.0);
+                    if (sum >= highThreshold)
+                        sum = 255; /* EDGE.  3*255 this needs to be settable */
+                    else if (sum < lowThreshold)
+                        sum = 0; /* NONEDGE */
+                    else
+                        {
+                        if ( IG_UGET(pImage, x-1, y-1)> highThreshold ||
+                             IG_UGET(pImage, x  , y-1)> highThreshold ||
+                             IG_UGET(pImage, x+1, y-1)> highThreshold ||
+                             IG_UGET(pImage, x-1, y  )> highThreshold ||
+                             IG_UGET(pImage, x+1, y  )> highThreshold ||
+                             IG_UGET(pImage, x-1, y+1)> highThreshold ||
+                             IG_UGET(pImage, x  , y+1)> highThreshold ||
+                             IG_UGET(pImage, x+1, y+1)> highThreshold)
+                            sum = 255; /* EDGE fix me too */
+                        else
+                            sum = 0; /* NONEDGE */
+                        }
+                    }
+
+
+                }/* else */
+            if (sum==0) /* invert light & dark */
+                sum = 255;
+            else
+                sum = 0;
+           IG_UPUT(newIg, x, y, sum);
+        }/* for (x) */
+    }/* for (y) */
+
+    return newIg;
+}
+
+
+
+bool Tracer::getInvertBm(potrace_bitmap_t *bm)
+{
+    if(!bm)
+        return false;
+
+     for (int y=0 ; y<bm->h ; y++){
+         for (int x=0 ; x<bm->w ; x++){
+                   int brightness = BM_UGET(bm, x, y);
+                   if(y<1){
+                       qDebug()<<brightness;
+                   }
+//                   brightness = 255 - brightness;
+//                   BM_UPUT(bm, x, y, brightness);
+         }
+     }
+     return true;
+}
+
+/**
+ *
+ */
+QImage *Tracer::grayMapCanny(QImage *pImage, double lowThreshold, double highThreshold)
+{
+    if (!pImage)
+        return NULL;
+
+    QImage *cannyImage = grayMapSobel(pImage, lowThreshold, highThreshold);
+    if (!cannyImage)
+        return NULL;
+    /*cannyGm->writePPM(cannyGm, "canny.ppm");*/
+
+    return cannyImage;
 }

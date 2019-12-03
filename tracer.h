@@ -13,6 +13,7 @@
 #define bm_mask(x) (BM_HIBIT >> ((x) & (BM_WORDBITS-1)))
 #define bm_range(x, a) ((int)(x) >= 0 && (int)(x) < (a))
 #define bm_safe(bm, x, y) (bm_range(x, (bm)->w) && bm_range(y, (bm)->h))
+#define BM_UGET(gm, x, y) (*bm_index(bm, x, y))
 #define BM_USET(bm, x, y) (*bm_index(bm, x, y) |= bm_mask(x))
 #define BM_UCLR(bm, x, y) (*bm_index(bm, x, y) &= ~bm_mask(x))
 #define BM_UPUT(bm, x, y, b) ((b) ? BM_USET(bm, x, y) : BM_UCLR(bm, x, y))
@@ -54,6 +55,13 @@ public:
 
     static void bm_free(potrace_bitmap_t *bm);
 
+    /*functions about edge detection*/
+    static QImage * grayMapSobel(QImage *pImage,
+                   double dLowThreshold, double dHighThreshold);
+
+    static QImage *grayMapCanny(QImage *pImage, double lowThreshold, double highThreshold);
+
+    static bool getInvertBm(potrace_bitmap_t *bm);
     /*functions about trace bm to path*/
 
     potrace_state_t * traceToPath( potrace_param_t *param,potrace_bitmap_t *bm);

@@ -100,6 +100,14 @@ bool GraphicsView::openFile(const QString &fileName)
     if(suffix=="svg"){
        return importSvg(fileName);
     }else if(suffix=="jpg"||suffix=="png"){
+//        if(!scene())
+//            return false;
+//         QPixmap pixmap = QPixmap::fromImage(QImage(fileName));
+//         QGraphicsPixmapItem *pix =new QGraphicsPixmapItem(pixmap);
+//         pix->setFlag(QGraphicsItem::ItemIsSelectable);
+//         pix->setScale(0.1);
+//         scene()->addItem(pix);
+
        return importImage(fileName);
     }
     /*
@@ -279,7 +287,7 @@ bool GraphicsView::exportGcode(const QString &fileName)
      QImage image = outPutImage();
      if(image.width()==0||image.height()==0)
          return false;
-
+     image.save(replaceSuffix(fileName,"bmp"));
      QString svgPath=replaceSuffix(fileName,"svg");
      //convert the image to svg by traceToSvg();
      if(tracer->traceToSvg(&image,svgPath)){
@@ -301,7 +309,7 @@ bool GraphicsView::exportGcode(const QString &fileName)
              p.waitForStarted();
              p.waitForFinished();
              qDebug()<<"export end";
-             fsvg.remove();
+//             fsvg.remove();
              return true;
          }else{
              qDebug()<<"fsvg dont not exist";

@@ -255,10 +255,11 @@ potrace_bitmap_t * Tracer::imageToBitmap(QImage *pImage)
       return 0 ;
     }
     /* fill the bitmap with some pattern */
+    //is the y-axis symmetric graphic of the original image
     for (y=0; y<height; y++) {
       for (x=0; x<width; x++) {
         //inverted the direction and color of  pImage
-        BM_PUT(bm, x, y,255-IG_UGET(pImage,x,height-y-1));
+        BM_PUT(bm, x, y,255-IG_UGET(pImage,x,y));
       }
     }
     return bm;

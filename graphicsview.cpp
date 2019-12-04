@@ -17,6 +17,7 @@
 #include "util.h"
 #include "svgtool.h"
 #include "tracer.h"
+#include "svgitem.h"
 GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
@@ -41,51 +42,44 @@ void GraphicsView::initDrawTool()
 {
     scene()->clear();
     resetTransform();
-    scene()->setSceneRect(0,0,700,300);
+    scene()->setSceneRect(0,0,640,440);
 
     int padding = 20;
     QRect paddingRect(padding,padding,scene()->width()-2*padding,scene()->height()-2*padding);
     // working space
     qreal robot_w = 640;
-    qreal robot_h = 160;
+    qreal robot_h = 440;
     QPointF robot_orgin(paddingRect.center().x(),paddingRect.bottom()-220);
-    m_working_rect =QRect(robot_orgin.x()-robot_h*2,robot_orgin.y(),robot_w,robot_h);
-    m_robot_rect = QRect(m_working_rect.x(),m_working_rect.y(),robot_w,220);
+    m_working_rect =QRect(0,0,320*2,60*2);
+
+
     m_workingItem = new QGraphicsRectItem(m_working_rect);
     m_workingItem->setPen(QPen(Qt::cyan,1,Qt::DashLine));
-    m_workingItem->setBrush(Qt::NoBrush);
     m_workingItem->setVisible(true);
-    m_workingItem->setZValue(m_background_zValue);
+
     QGraphicsRectItem *paddingItem = new QGraphicsRectItem(paddingRect);
     paddingItem->setPen(QPen(Qt::black,1,Qt::DashLine));
     paddingItem->setZValue(m_background_zValue);
     //coordinate x and y line
-    m_xLineItem = new QGraphicsLineItem(paddingRect.center().x(),paddingRect.bottom(),paddingRect.center().x(),m_working_rect.bottom());
-    m_xLineItem->setPen(QPen(Qt::gray,1));
+    m_xLineItem = new QGraphicsLineItem(sceneRect().center().x(),0,sceneRect().center().x(),sceneRect().bottom());
+    m_xLineItem->setPen(QPen(Qt::green,2));
     m_xLineItem->setZValue(m_background_zValue);
-    QGraphicsRectItem *robotItem = new QGraphicsRectItem(m_robot_rect);
-    robotItem->setPen(QPen(Qt::yellow,1));
-    robotItem->setZValue(m_background_zValue);
 
-    QImage new_image("F://start//QT//res//miku.jpg");
-    QGraphicsPixmapItem * n_pixmap=new QGraphicsPixmapItem();
+
+    QImage new_image(":/image/resource/coordinateRect.png");
+    QGraphicsPixmapItem * backgroundItem=new QGraphicsPixmapItem();
     QPixmap tempPixmap = QPixmap::fromImage(new_image);
-    n_pixmap->setPixmap(tempPixmap);
-    n_pixmap->setScale(0.1);
-    n_pixmap->setPos(0,0);
+    backgroundItem->setPixmap(tempPixmap);
+    backgroundItem->setZValue(-1);
 
-//    QTransform transform2;
-//    transform2.translate(center.x(),center.y());
-//    transform2.scale(2,3);
-//    transform2.translate(-center.x(),-center.y());
-//    transform*=transform;
 //    scene()->addItem(n_pixmap);
 
 //    scene()->addItem(m_backgroundItem);
-    scene()->addItem(paddingItem);
-    scene()->addItem(m_xLineItem);
-    scene()->addItem(robotItem);
+//    scene()->addItem(paddingItem);
+     scene()->addItem(backgroundItem);
+//    scene()->addItem(m_xLineItem);
     scene()->addItem(m_workingItem);
+
     m_pTool = new SvgTool(scene());
 
 }
@@ -99,7 +93,7 @@ bool GraphicsView::openFile(const QString &fileName)
     QString suffix =getSuffix(fileName);
     if(suffix=="svg"){
        return importSvg(fileName);
-    }else if(suffix=="jpg"||suffix=="png"){
+    }else if(suffix=="jpg"||suffix=="png"||suffix=="bmp"){
 //        if(!scene())
 //            return false;
 //         QPixmap pixmap = QPixmap::fromImage(QImage(fileName));
@@ -184,16 +178,6 @@ QImage GraphicsView::outPutImage()
         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
         svgTool->emptySelection();
     }
-    if(m_xLineItem){
-        m_xLineItem->setVisible(false);
-    }
-    if(m_workingItem){
-        m_workingItem->setVisible(false);
-    }
-    if(isSceneEmpty()){
-        QImage emptyImage;
-        return emptyImage;
-    }
 
     QImage image(scene()->width(),scene()->height(),QImage::Format_Grayscale8);
 
@@ -209,24 +193,51 @@ QImage GraphicsView::outPutImage()
 
     painter.end();
 
-    image = image.copy( m_robot_rect.adjusted(1,1,-1,-1));
-
-    if(m_xLineItem){
-        m_xLineItem->setVisible(true);
-    }
-    if(m_workingItem){
-        m_workingItem->setVisible(true);
-    }
     return image;
 
 }
 void GraphicsView::test2()
 {
+    QGraphicsSvgItem *n_svgItem = new QGraphicsSvgItem("F:/start/QT/selectionGroup/ruler/workspace.svg");
+    QTransform trans;
+//    trans.translate(320,320);
+
+   trans.rotate(-90);
+   trans.scale(1,-1);
+   trans.translate(-440,-320);
+//    trans.translate(-320,-30);
+    n_svgItem->setTransform(trans);
+    scene()->addItem(n_svgItem);
 
 }
 void GraphicsView::test()
 {
+    QTransform coorTrans;
+    coorTrans.rotate(-90);
+    coorTrans.scale(-1,-1);
+//    coorTrans.translate(320,-440);
+//    coorTrans.scale(0.5,0.5);
+    coorTrans=coorTrans.inverted();
+    qDebug()<<coorTrans.map(QPoint(-160*2,220*2));
+    return;
+    qDebug()<<"test";
+//    test2();
+    if(m_pTool){
+        SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
+        svgTool->emptySelection();
+    }
 
+    QList<QGraphicsItem*> itemList = scene()->items();
+    for(auto item : itemList){
+        if(item->isVisible()){
+            if(item->type()==SvgItem::Type){
+                SvgItem * tempSvgItem = qgraphicsitem_cast<SvgItem*>(item);
+//                 tempSvgItem->setWorkSpace
+                qDebug()<<tempSvgItem->transform();
+
+            }
+        }
+    }
 
 }
 
@@ -255,69 +266,62 @@ bool GraphicsView::importImage(const QString &fileName)
 
 bool GraphicsView::importSvg(const QString &fileName)
 {
-        QSize size(m_max_import_width,m_max_import_height);
-
-        QSvgRenderer *newRenderer = process_svgResizeTo(fileName,size);
-
-        if(!newRenderer)
-            return false;
-
-        QGraphicsSvgItem *new_svg = new QGraphicsSvgItem();
-
-        new_svg->setSharedRenderer(newRenderer);
+        if(fileName.isEmpty())
+           return  false;
+        SvgItem *new_svg = new SvgItem(fileName);
 
         if(!new_svg)
             return false;
         if(!scene()){
             return false;
         }
+
+        // get a suitable size of new svgitem
+        QSizeF size(m_max_import_width,m_max_import_height);
+
+        QSizeF new_size = suitableSize(QSizeF(new_svg->boundingRect().width(),new_svg->boundingRect().height()),size);
+
+        qreal factor = new_size.width()/new_svg->boundingRect().width();
+
+        QTransform transform ;
+
+        transform.scale(factor,factor);
+        //set this to make svgtool be used
         new_svg->setFlag(QGraphicsItem::ItemIsSelectable);
+
+        new_svg->setTransform(transform);
 
         scene()->addItem(new_svg);
 
         qDebug()<<"import miku boundingRect"<<new_svg->boundingRect();
+
         return true;
 }
 
 bool GraphicsView::exportGcode(const QString &fileName)
 {
-     Tracer *tracer=new Tracer();
-     if(!tracer)
+     if(fileName.isEmpty()||!scene())
          return false;
-     QImage image = outPutImage();
-     if(image.width()==0||image.height()==0)
-         return false;
-     image.save(replaceSuffix(fileName,"bmp"));
-     QString svgPath=replaceSuffix(fileName,"svg");
-     //convert the image to svg by traceToSvg();
-     if(tracer->traceToSvg(&image,svgPath)){
-         QFile fsvg(svgPath);
-         if(fsvg.exists()){
-             //use process to invoke gogcode.exe
-             QProcess p(0);
-             QStringList arg;
-             qDebug()<<"start export";
-             QString currentPath = QCoreApplication::applicationDirPath();
-             qDebug()<<currentPath;
-             QString gogcode = currentPath+"/gogcode.exe";
-//             QString gogcode= "F:/start/QT/drawApp002/tool/gogcode.exe";
-             qDebug()<<replaceSuffix(fileName,"svg");
-             arg<< "--file"<<svgPath<<"--output"<<replaceSuffix(fileName,"gcode")<<"--scale"<<"0.5"<<"--dx"<<"-160"<<"--dy"<<"0";
-             qDebug()<<arg;
-             //start gogcode.exe
-             p.start(gogcode,arg);
-             p.waitForStarted();
-             p.waitForFinished();
-             qDebug()<<"export end";
-//             fsvg.remove();
-             return true;
-         }else{
-             qDebug()<<"fsvg dont not exist";
-             return false;
-         }
 
+     if(m_pTool){
+         SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
+         svgTool->emptySelection();
      }
-     return false;
+
+     QList<QGraphicsItem*> itemList = scene()->items();
+     for(auto item : itemList){
+         if(item->isVisible()){
+             if(item->type()==SvgItem::Type){
+                 SvgItem * tempSvgItem = qgraphicsitem_cast<SvgItem*>(item);
+//                 tempSvgItem->setWorkSpace()
+                 if(!tempSvgItem->exportGcode(fileName))
+                 {
+                     return  false;
+                 }
+             }
+         }
+     }
+     return true;
 }
 bool GraphicsView::exprotSvg(const QString &fileName)
 {

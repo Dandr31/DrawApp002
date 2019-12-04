@@ -333,3 +333,28 @@ QString getSuffix(QString str)
     return l.at(l.length()-1);
 
 }
+QSizeF suitableSize(QSizeF cur_size,QSizeF size)
+{
+
+    qreal new_width=size.width();
+    qreal new_height=size.height();
+
+    //is width longer than height
+    bool width_than_height=cur_size.width()>cur_size.height()? true:false;
+
+    qreal max_length=cur_size.width()>cur_size.height()? cur_size.width():cur_size.height();
+
+    //calculate the appropriate width and height
+    if(max_length>size.width()){
+        if(width_than_height){
+             new_width=size.width();
+             qreal factor = new_width/cur_size.width();
+             new_height=factor*cur_size.height();
+        }else{
+            new_height=size.height();
+            qreal factor = new_height/cur_size.height();
+            new_width=factor*cur_size.width();
+        }
+    }
+    return QSize(new_width,new_height);
+}

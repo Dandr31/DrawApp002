@@ -17,7 +17,7 @@
 /* coordinate quantization */
 static inline point_t unit(dpoint_t p) {
   point_t q;
-  double test_unit = 10;
+  double test_unit = 1;
   q.x = (long)(floor(p.x*test_unit+.5));
   q.y = (long)(floor(p.y*test_unit+.5));
   return q;
@@ -206,15 +206,18 @@ int page_svg(FILE *fout, potrace_path_t *plist,imginfo_t *imginfo)
     fprintf(fout, "Created by Dr\n");
     fprintf(fout, "</metadata>\n");
   /* use a "group" tag to establish coordinate system and style */
+    fprintf(fout, "<g ");
+    /*
    fprintf(fout, "<g transform=\"");
    if (origx != 0 || origy != 0) {
      fprintf(fout, "translate(%f,%f) ", origx, origy);
    }
-//   if (info.angle != 0) {
-//     fprintf(fout, "rotate(%.2f) ", -info.angle);
-//   }
+   if (info.angle != 0) {
+     fprintf(fout, "rotate(%.2f) ", -info.angle);
+   }
    fprintf(fout, "scale(%f,%f)", scalex, scaley);
    fprintf(fout, "\"\n");
+   */
    fprintf(fout, "fill=\"#%06x\" stroke=\"none\">\n",0.0);
 //   write_paths_opaque(fout, plist);
 

@@ -38,6 +38,7 @@ SOURCES += \
         potrace/svg.c \
         potrace/trace.c \
         selectionrectitem.cpp \
+        svgitem.cpp \
         svgtool.cpp \
         tracer.cpp \
         util.cpp
@@ -58,6 +59,7 @@ HEADERS += \
         potrace/svg.h \
         potrace/trace.h \
         selectionrectitem.h \
+        svgitem.h \
         svgtool.h \
         tracer.h \
         util.h
@@ -66,3 +68,6 @@ HEADERS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resource.qrc

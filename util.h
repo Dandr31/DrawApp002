@@ -6,7 +6,9 @@
 #define IG_UGET(ig,x,y)(*ig_index(ig,x,y))
 #define IG_UPUT(ig, x, y, b) (*ig_index(ig, x, y) = (signed short int)(b))
 bool rangeCheck(double f);
+
 QRgb grayToRgb(double f);
+
 int  process_threshold(QImage *pIg,double c);
 
 int  process_highpass(QImage *pIg, double lambda=4);
@@ -19,7 +21,10 @@ QSvgRenderer * process_imageToSvg(const QString &fileName);
 
 QString replaceSuffix(QString str,QString suf);
 
+
 QString getSuffix(QString str);
+
+QSizeF suitableSize(QSizeF cur_size,QSizeF size);
 
 QString makeBitmapByPotrace(const QString &fileName);
 

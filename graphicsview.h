@@ -73,8 +73,6 @@ private:
     QImage m_image;
 
     QString path;
-    //robot's coordinate rect
-    QRect m_robot_rect;
 
     //effective robot's coordinate rect
     QRect m_working_rect;

@@ -2,6 +2,7 @@
 #include <QGraphicsSvgItem>
 #include <QDebug>
 #include <QtMath>
+#include "svgitem.h"
 SvgTool::SvgTool(QGraphicsScene *scene):
     BaseTool (scene),
     m_selection(new SelectionRectItem())

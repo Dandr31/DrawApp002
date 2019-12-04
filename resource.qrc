@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/image">
+        <file>resource/cellAndCoordinate.png</file>
+        <file>resource/coordinateRect.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>

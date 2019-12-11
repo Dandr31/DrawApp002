@@ -46,6 +46,9 @@ public slots:
 
      void test2();
 
+     void setFilter();
+
+     void setGenerate();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -87,7 +90,9 @@ private:
 
     int m_max_import_height=200;
 
+    int m_filterType  = 0;
 
+    int m_generateType =0;
 };
 
 #endif // GRAPHICSVIEW_H

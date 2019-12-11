@@ -14,10 +14,12 @@
 #include <QDateTime>
 #include <QProcess>
 #include <QCoreApplication>
+#include <QInputDialog>
 #include "util.h"
 #include "svgtool.h"
 #include "tracer.h"
 #include "svgitem.h"
+#include "filter.h"
 GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
@@ -196,6 +198,54 @@ QImage GraphicsView::outPutImage()
     return image;
 
 }
+void GraphicsView::setGenerate()
+{
+    QStringList items; //
+    items <<"Nomal path"<<"Laser Points"<<"Laser Scan";
+    QString dlgTitle="set Generater";
+    QString txtLabel="choose Generater";
+    int     curIndex=0;
+    bool    editable=true;
+    bool    ok=false;
+    QString text = QInputDialog::getItem(this, dlgTitle,txtLabel,items,curIndex,editable,&ok);
+    if (ok && !text.isEmpty())
+    {
+        if(text==items[0]){
+            m_generateType = 0;
+        }
+        if(text==items[1]){
+            m_generateType = 1;
+        }
+        if(text==items[2]){
+            m_generateType = 2;
+        }
+    }
+}
+void GraphicsView::setFilter()
+{
+
+   QStringList items; //ComboBox 列表的内容
+   items <<"Edge Dection"<<"Make Bitmap"<<"Brightnesss";
+   QString dlgTitle="set filter";
+   QString txtLabel="choose filter";
+   int     curIndex=0;
+   bool    editable=true;
+   bool    ok=false;
+   QString text = QInputDialog::getItem(this, dlgTitle,txtLabel,items,curIndex,editable,&ok);
+   if (ok && !text.isEmpty())
+   {
+       if(text==items[0]){
+           m_filterType = 0;
+       }
+       if(text==items[1]){
+           m_filterType = 1;
+       }
+       if(text==items[2]){
+           m_filterType = 2;
+       }
+   }
+
+}
 void GraphicsView::test2()
 {
     QGraphicsSvgItem *n_svgItem = new QGraphicsSvgItem("F:/start/QT/selectionGroup/ruler/workspace.svg");
@@ -212,39 +262,31 @@ void GraphicsView::test2()
 }
 void GraphicsView::test()
 {
-    QTransform coorTrans;
-    coorTrans.rotate(-90);
-    coorTrans.scale(-1,-1);
-//    coorTrans.translate(320,-440);
-//    coorTrans.scale(0.5,0.5);
-    coorTrans=coorTrans.inverted();
-    qDebug()<<coorTrans.map(QPoint(-160*2,220*2));
+    //条目选择输入
+
     return;
-    qDebug()<<"test";
-//    test2();
-    if(m_pTool){
-        SvgTool *svgTool = static_cast<SvgTool*>(m_pTool);
-        svgTool->emptySelection();
+    EdgeDection *edgeFilter = new EdgeDection();
+    MakeBitmap *bitFilter = new MakeBitmap();
+    Brightness *brightFilter = new Brightness();
+    QImage image("C:/Users/Thinkpad/Pictures/circle.bmp");
+    QImage grayImg = image.convertToFormat(QImage::Format_Grayscale8);
+    QImage *new_img = edgeFilter->filters(&grayImg);
+    QImage *bit_img =bitFilter->filters(&grayImg);
+    QImage *bright_img = brightFilter->filters(&grayImg);
+    if(!new_img)
+    {
+        qDebug()<<"new_image is null";
     }
-
-    QList<QGraphicsItem*> itemList = scene()->items();
-    for(auto item : itemList){
-        if(item->isVisible()){
-            if(item->type()==SvgItem::Type){
-                SvgItem * tempSvgItem = qgraphicsitem_cast<SvgItem*>(item);
-//                 tempSvgItem->setWorkSpace
-                qDebug()<<tempSvgItem->transform();
-
-            }
-        }
-    }
-
+    new_img->save("C:/Users/Thinkpad/Pictures/edge.jpg");
+    bit_img->save("C:/Users/Thinkpad/Pictures/bit.bmp");
+    bright_img->save("C:/Users/Thinkpad/Pictures/bright.bmp");
 }
 
 bool GraphicsView::importImage(const QString &fileName)
 {
 
     Tracer * tracer = new Tracer();
+    tracer->setFilter(m_filterType);
     if(!tracer)
           return false;
     /*Hancock*/

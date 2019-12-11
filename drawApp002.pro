@@ -27,6 +27,7 @@ CONFIG += c++11
 
 SOURCES += \
         basetool.cpp \
+        filter.cpp \
         graphicsscene.cpp \
         graphicsview.cpp \
         handleitem.cpp \
@@ -45,6 +46,7 @@ SOURCES += \
 
 HEADERS += \
         basetool.h \
+        filter.h \
         graphicsscene.h \
         graphicsview.h \
         handleitem.h \
@@ -61,6 +63,19 @@ HEADERS += \
         selectionrectitem.h \
         svgitem.h \
         svgtool.h \
+        trace/bitmap.h \
+        trace/filterset.h \
+        trace/potrace/auxiliary.h \
+        trace/potrace/bitmap.h \
+        trace/potrace/curve.h \
+        trace/potrace/decompose.h \
+        trace/potrace/lists.h \
+        trace/potrace/potracelib.h \
+        trace/potrace/progress.h \
+        trace/potrace/svg.h \
+        trace/potrace/trace.h \
+        trace/potrace_tracingengine.h \
+        trace/trace.h \
         tracer.h \
         util.h
 
@@ -71,3 +86,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resource.qrc
+
+DISTFILES += \
+    trace/potrace/readme.txt

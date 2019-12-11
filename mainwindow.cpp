@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
 
       toolBar->addAction(tr("delete"),m_view,&GraphicsView::deleteItem);
       toolBar->addAction(tr("test"),m_view,&GraphicsView::test);
+      toolBar->addAction(tr("set Filter"),m_view,&GraphicsView::setFilter);
+      toolBar->addAction(tr("set Generate"),m_view,&GraphicsView::setGenerate);
       setCentralWidget(m_view);
 }
 
@@ -96,11 +98,13 @@ void MainWindow::exportGcode()
     if (newPath.isEmpty())
           return;
     path = newPath;
-    statusBar()->showMessage(path);
+
     if(!m_view->exportGcode(path)){
         const QString message =tr("save gcode failed");
         statusBar()->showMessage(message);
     }else{
+        const QString message =tr("save gcode success");
+        statusBar()->showMessage(message);
         return;
     }
 }

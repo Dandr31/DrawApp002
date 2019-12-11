@@ -85,6 +85,10 @@ QString SvgItem::transformToStr()
     posTrans.rotate(angle);
     tr*=posTrans;
     //change the coordinate
+    /*example:
+     *    factor = 2;
+     *    workrect = QRect(0,0,320,220)
+    */
     QTransform coorTrans;
     qreal factor  = getCoordinateScale();
     QRect workrect =getWorkSpace();
@@ -97,14 +101,6 @@ QString SvgItem::transformToStr()
     str=QString("%1_%2_%3_%4_%5_%6_%7_%8_%9").arg(tr.m11()).arg(tr.m12()).arg(tr.m13())
                                              .arg(tr.m21()).arg(tr.m22()).arg(tr.m23())
                                              .arg(tr.m31()).arg(tr.m32()).arg(tr.m33());
-
-//    str=QString("%1_%2_%3_%4_%5_%6_%7_%8_%9").arg(0.01).arg(0).arg(0)
-//                                             .arg(0).arg(0.01).arg(0)
-//                                             .arg(0).arg(0).arg(1);
-
-//    str=QString("%1_%2_%3_%4_%5_%6_%7_%8_%9").arg(tr.m11()).arg(tr.m21()).arg(tr.m31())
-//                                             .arg(tr.m12()).arg(tr.m22()).arg(tr.m32())
-//                                             .arg(tr.m13()).arg(tr.m23()).arg(tr.m33());
     return str;
 }
 bool SvgItem::exportGcode(const QString &fileName )
@@ -127,8 +123,8 @@ bool SvgItem::exportGcode(const QString &fileName )
    QProcess p(0);
    QString currentPath = QCoreApplication::applicationDirPath();
 
-   QString gogcode = currentPath+"/gogcode.exe";
-//   QString gogcode = "F:/start/QT/gogcode/dist/gogcode.exe";
+//   QString gogcode = currentPath+"/gogcode.exe";
+   QString gogcode = "F:/start/QT/gogcode/dist/gogcode.exe";
    QStringList arg;
    arg<<"inputd"<<"--file"<<d_path<<"--output"<<replaceSuffix(fileName,"gcode")<<"--transform"<<transformToStr();
    qDebug()<<arg;

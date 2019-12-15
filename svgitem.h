@@ -32,6 +32,8 @@ public:
     bool exportGcode(const QString &fileName);
 
     QString transformToStr();
+
+    QTransform getFinalTransfrom();
     enum { Type = UserType + 3 };
     int type() const override
       {

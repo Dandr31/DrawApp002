@@ -41,6 +41,14 @@ SOURCES += \
         selectionrectitem.cpp \
         svgitem.cpp \
         svgtool.cpp \
+        toGcode/GcodeGenerator.cpp \
+        toGcode/SVGParser.cpp \
+        toGcode/bezierlib/Arc.cpp \
+        toGcode/bezierlib/BezierToBiarc.cpp \
+        toGcode/bezierlib/BiArc.cpp \
+        toGcode/bezierlib/CubicBezier.cpp \
+        toGcode/bezierlib/Line.cpp \
+        toGcode/gcode.cpp \
         tracer.cpp \
         util.cpp
 
@@ -63,6 +71,16 @@ HEADERS += \
         selectionrectitem.h \
         svgitem.h \
         svgtool.h \
+        toGcode/GcodeGenerator.h \
+        toGcode/SVGParser.h \
+        toGcode/bezierlib/Arc.h \
+        toGcode/bezierlib/BezierToBiarc.h \
+        toGcode/bezierlib/BiArc.h \
+        toGcode/bezierlib/CubicBezier.h \
+        toGcode/bezierlib/Line.h \
+        toGcode/dpoint.h \
+        toGcode/gcode.h \
+        toGcode/togcode.h \
         trace/bitmap.h \
         trace/filterset.h \
         trace/potrace/auxiliary.h \

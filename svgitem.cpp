@@ -6,6 +6,7 @@
 #include <QGraphicsScene>
 #include <QCoreApplication>
 #include "util.h"
+#include "toGcode/togcode.h"
 SvgItem::SvgItem(const QString &fileName, QGraphicsItem *parentItem):
     QGraphicsSvgItem (fileName,parentItem)
 {
@@ -74,6 +75,17 @@ bool SvgItem::setD(QByteArray d)
 QString SvgItem::transformToStr()
 {
     QString str;
+
+    QTransform tr= this->getFinalTransfrom();
+
+
+    str=QString("%1_%2_%3_%4_%5_%6_%7_%8_%9").arg(tr.m11()).arg(tr.m12()).arg(tr.m13())
+                                             .arg(tr.m21()).arg(tr.m22()).arg(tr.m23())
+                                             .arg(tr.m31()).arg(tr.m32()).arg(tr.m33());
+    return str;
+}
+QTransform SvgItem::getFinalTransfrom(){
+
     qreal scaleFactor = this->scale();
     qreal angle = this->rotation();
     QPointF pos=this->pos();
@@ -97,17 +109,18 @@ QString SvgItem::transformToStr()
     coorTrans.translate(-workrect.width()/2,-workrect.height());
     coorTrans.scale(1/factor,1/factor);
     tr*=coorTrans;
-
-    str=QString("%1_%2_%3_%4_%5_%6_%7_%8_%9").arg(tr.m11()).arg(tr.m12()).arg(tr.m13())
-                                             .arg(tr.m21()).arg(tr.m22()).arg(tr.m23())
-                                             .arg(tr.m31()).arg(tr.m32()).arg(tr.m33());
-    return str;
+    return tr;
 }
 bool SvgItem::exportGcode(const QString &fileName )
 {
     qDebug()<<"export Gcode";
     if(fileName.isEmpty())
         return false;
+
+   GcodeGenerator gGenerator;
+   gGenerator.setGcodeType(GcodeGenerator::GCODE_NORMAL);
+   return gGenerator.goGcode(m_d->data(),fileName.toStdString().data(),getFinalTransfrom());
+    /*
     QString d_path = replaceSuffix(fileName,"txt");
     QFile fout(d_path);
      if(!fout.open(QFile::WriteOnly | QFile::Text)) {
@@ -133,6 +146,7 @@ bool SvgItem::exportGcode(const QString &fileName )
    p.waitForFinished();
 //   qDebug()<<QString::fromLocal8Bit(p.readAllStandardOutput());
    return true;
+   */
 }
 bool SvgItem::setWorkSpace(QRect rect)
 {

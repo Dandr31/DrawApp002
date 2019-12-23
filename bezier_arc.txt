@@ -1,0 +1,85 @@
+QPointF bezier_at_t( bez ,t)
+{
+   double  ax =bez.P1.x();
+   double  bx =bez.C1.x();
+   double  cx =bez.C2.x();
+   double  bx =bez.P2.x();
+
+
+   double  ay =bez.P1.y();
+   double  by =bez.C1.x();
+   double  cy =bez.C2.y();
+   double  by =bez.P2.y();
+
+   double  x1 =ax+(bx-ax)*t;
+   double  y1 =ay+(by-ay)*t;
+
+   double  x2 =bx+(cx-bx)*t;
+   double  y2 =by+(cy-by)*t;
+   
+   double  x3 =cx+(dx-cx)*t;
+   double  y3 =cy+(dy-cy)*t;
+   
+   double  x4 = x1 +(x2-x1)*t;
+   double  y4 = y1 +(y2-y1)*t;
+
+   double  x5 = x2 +(x3-x2)*t;
+   double  y5 = y2 +(y3-y2)*t;
+   
+   double x = x4+(x5-x4)*t;
+   double y = y4+(y5-y4)*t;
+
+   return QPointF(x,y);
+}
+double point_to_arc_distance(p,arc)
+{
+   QPointF P0 = arc.P0;
+   QPointF P2 = arc.P2;
+   QPointF C  = arc.C;
+   double a = arc.sweepAngle;
+   r = (P0-C).mag();
+
+   if(r>0){
+       QPointF i = C + (P-C).unit()*r;
+       double alpha = ((i-C).angle()-(P0-C).angle());
+       if(a*alpha <0){
+           if(alpha>0){
+               alpha = alpha-Pi*Pi;
+           }else{
+               alpha = alpha+Pi*Pi;
+           }//if alpha>0 end
+       }//if a* alpha end
+       if(between(alpha,0,a)||min(abs(alpha),abs(alpha-a))<straight_tolerance){
+
+		return (p-i).mag();
+       }else{
+           double  d1 =(p-P0).mag();
+	   double  d2 =(p-P2).mag();
+           if(d1<d2){
+		return  d1;
+	   }else{
+                return  d2;
+           }
+
+	}//if(between(alpha,0,....end
+
+   }//if r>0 end
+	
+}
+bool between(c,x,y){
+     return( x-straight_tolerance<=c&&c<=y+straight_tolerance || y-straight_tolerance<=c&&c<=x+straight_tolerance);
+}
+
+def csp_to_arc_distance(sp1,sp2, arc1, arc2, tolerance = 0.01 ): # arc = [start,end,center,alpha]
+	n, i = 10, 0
+	d, d1, dl = (0,(0,0)), (0,(0,0)), 0
+	while i<1 or (abs(d1[0]-dl[0])>tolerance and i<4):
+		i += 1
+		dl = d1*1	
+		for j in range(n+1):
+			t = float(j)/n
+			p = csp_at_t(sp1,sp2,t) 
+			d = min(point_to_arc_distance(p,arc1), point_to_arc_distance(p,arc2))
+			d1 = max(d1,d)
+		n=n*2
+	return d1[0]

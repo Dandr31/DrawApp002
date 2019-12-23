@@ -6,8 +6,8 @@
 //
 
 #include "BezierToBiarc.h"
-
-
+#include <QDebug>
+#define Pi 3.1415926
 
 BezierToBiarc::BezierToBiarc() {
     
@@ -16,7 +16,8 @@ BezierToBiarc::BezierToBiarc() {
 BiarcVector  BezierToBiarc::ApproxCubicBezier(CubicBezier bezier, float samplingStep, float tolerance) {
     vector<BiArc> biarcs;
     stack<CubicBezier> curves;
-    
+    qDebug()<<QString::fromStdString(bezier.toString());
+
     // ---------------------------------------------------------------------------
     // First, calculate the inflexion points and split the bezier at them (if any)
     
@@ -68,10 +69,16 @@ BiarcVector  BezierToBiarc::ApproxCubicBezier(CubicBezier bezier, float sampling
         curves.push(toSplit);
     }
     
+   // int count =0;//a hack to avoid  infinite loop
+   // int maxCount =20;
     // ---------------------------------------------------------------------------
     // Second, approximate the curves until we run out of them
     while (curves.size() > 0)
     {
+       //  count++;
+       // if(count>maxCount){
+       //     break;
+       // }
         CubicBezier bezier = curves.top();
         curves.pop();
         
@@ -114,7 +121,7 @@ BiarcVector  BezierToBiarc::ApproxCubicBezier(CubicBezier bezier, float sampling
         
         auto nrPointsToCheck = biarc.Length() / samplingStep;
         auto parameterStep = 1.0f / nrPointsToCheck;
-        
+
         for (int i = 0; i <= nrPointsToCheck; i++)
         {
             //cout << "check: " << i << "\n";
@@ -122,14 +129,25 @@ BiarcVector  BezierToBiarc::ApproxCubicBezier(CubicBezier bezier, float sampling
             DPoint u1 = biarc.PointAt(t);
             DPoint u2 = bezier.PointAt(t);
             float distance = (u1 - u2).length();
-            
+            qDebug()<<"distance"<<distance;
             if (distance > maxDistance)
             {
                 maxDistance = distance;
                 maxDistanceAt = t;
             }
+            /*
+            float t = parameterStep*i;
+            DPoint u2 =bezier_at_t(bezier,t);
+            float d1 =point_to_arc_distance(u2,biarc.A1);
+            float d2 =point_to_arc_distance(u2,biarc.A2);
+            if(d1>d2)
+                d1=d2;
+            if(d1>maxDistance){
+                maxDistance = d1;
+                maxDistanceAt = t;
+            }*/
         }
-
+        qDebug()<<"maxDistance"<<maxDistance;
         // Check if the two curves are close enough
         if (maxDistance > tolerance)
         {
@@ -145,11 +163,85 @@ BiarcVector  BezierToBiarc::ApproxCubicBezier(CubicBezier bezier, float sampling
             biarcs.push_back(biarc);
         }
     }
-
+    qDebug()<<"ApproxCubicBezier end";
 	return biarcs;
 }
 
 bool BezierToBiarc::IsRealInflexionPoint(complex<float> t)
 {
     return imag(t) == 0 && real(t) > 0 && real(t) < 1;
+}
+
+
+DPoint  BezierToBiarc::bezier_at_t( CubicBezier bez ,float t)
+{
+   double  ax =bez.P1.m_x;
+   double  bx =bez.C1.m_x;
+   double  cx =bez.C2.m_x;
+   double  dx =bez.P2.m_x;
+
+
+   double  ay =bez.P1.m_y;
+   double  by =bez.C1.m_y;
+   double  cy =bez.C2.m_y;
+   double  dy =bez.P2.m_y;
+
+   double  x1 =ax+(bx-ax)*t;
+   double  y1 =ay+(by-ay)*t;
+
+   double  x2 =bx+(cx-bx)*t;
+   double  y2 =by+(cy-by)*t;
+   
+   double  x3 =cx+(dx-cx)*t;
+   double  y3 =cy+(dy-cy)*t;
+   
+   double  x4 = x1 +(x2-x1)*t;
+   double  y4 = y1 +(y2-y1)*t;
+
+   double  x5 = x2 +(x3-x2)*t;
+   double  y5 = y2 +(y3-y2)*t;
+   
+   double x = x4+(x5-x4)*t;
+   double y = y4+(y5-y4)*t;
+
+   return DPoint(x,y);
+}
+double  BezierToBiarc::point_to_arc_distance(DPoint p,Arc arc)
+{
+   DPoint P0 = arc.P1;
+   DPoint P2 = arc.P2;
+   DPoint C  = arc.C;
+   double a = arc.sweepAngle;
+   double r = (P0-C).mag();
+
+   if(r>0){
+       DPoint i = C + (P0-C).unit()*r;
+       double alpha = ((i-C).angle()-(P0-C).angle());
+       if(a*alpha <0){
+           if(alpha>0){
+               alpha = alpha-Pi*Pi;
+           }else{
+               alpha = alpha+Pi*Pi;
+           }//if alpha>0 end
+       }//if a* alpha end
+       if(between(alpha,0,a)||min(abs(alpha),abs(alpha-a))<straight_tolerance){
+
+		return (p-i).mag();
+       }else{
+           double  d1 =(p-P0).mag();
+           double  d2 =(p-P2).mag();
+           if(d1<d2){
+                return  d1;
+           }else{
+                return  d2;
+           }
+
+       }//if(between(alpha,0,....end
+
+   }//if r>0 end
+	
+}
+bool  BezierToBiarc::between(double c,double x,double y){
+
+     return( x-straight_tolerance<=c&&c<=y+straight_tolerance || y-straight_tolerance<=c&&c<=x+straight_tolerance);
 }

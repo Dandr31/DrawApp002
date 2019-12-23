@@ -21,6 +21,15 @@ using namespace std;
 		float mag() {
 			return hypot(m_x, m_y);
 		}
+        inline DPoint unit(){
+            float h = this->mag();
+             if( h!=0){
+                 DPoint temp = DPoint(m_x,m_y);
+                return temp / h;
+              }else{
+                 return DPoint(0,0);
+             }
+        }
 		float angle() {
 			return atan2(m_y, m_x);
 		}

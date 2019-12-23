@@ -20,4 +20,8 @@ public:
 	BiarcVector ApproxCubicBezier(CubicBezier bezier, float samplingStep, float tolerance);
 private:
     static bool IsRealInflexionPoint(complex<float> t);
+    DPoint bezier_at_t( CubicBezier bez ,float t);
+    double  BezierToBiarc::point_to_arc_distance(DPoint p,Arc arc);
+    bool  BezierToBiarc::between(double c,double x,double y);
+    double straight_tolerance = 0.01;
 };

@@ -20,6 +20,8 @@
 #include "tracer.h"
 #include "svgitem.h"
 #include "filter.h"
+#include "toGcode/togcode.h"
+#include "toGcode/dpoint.h"
 GraphicsView::GraphicsView(QWidget *parent)
 : QGraphicsView(parent)
  , m_svgItem(nullptr)
@@ -262,24 +264,33 @@ void GraphicsView::test2()
 }
 void GraphicsView::test()
 {
+    qDebug()<<"test start";
     //条目选择输入
+//209.179 79.403   209.552 79.403   209.925 79.0299   209.925 79.0299
+    DPoint p1(209.179, 79.403);
+    DPoint p2(209.552, 79.403);
+    DPoint p3(209.925 ,79.0299);
+    DPoint p4(209.925, 79.0299);
 
-    return;
-    EdgeDection *edgeFilter = new EdgeDection();
-    MakeBitmap *bitFilter = new MakeBitmap();
-    Brightness *brightFilter = new Brightness();
-    QImage image("C:/Users/Thinkpad/Pictures/circle.bmp");
-    QImage grayImg = image.convertToFormat(QImage::Format_Grayscale8);
-    QImage *new_img = edgeFilter->filters(&grayImg);
-    QImage *bit_img =bitFilter->filters(&grayImg);
-    QImage *bright_img = brightFilter->filters(&grayImg);
-    if(!new_img)
-    {
-        qDebug()<<"new_image is null";
+    CubicBezier c(p1,p2,p3,p4);
+    CubicBezier c2(DPoint(100,300),DPoint(200,400),DPoint(300,500),DPoint(400,300));
+    BezierToBiarc btb;
+    BiarcVector biarcs= btb.ApproxCubicBezier(c,0.5,0.1);
+    qDebug()<<"aporoxCubicBezer";
+    std::ofstream biarcFile;
+    biarcFile.open("C:/Users/Thinkpad/Pictures/gcodevs/biarcs.txt");
+    for(BiarcVector::const_iterator b_it = biarcs.begin(); b_it != biarcs.end(); b_it++) {
+       biarcFile<<"A1"<<endl;
+       biarcFile<<(*b_it).A1.P1.m_x<<" " <<(*b_it).A1.P1.m_y<<endl;
+       biarcFile<<(*b_it).A1.P2.m_x<<" " <<(*b_it).A1.P2.m_y<<endl;
+       biarcFile<<(*b_it).A1.C.m_x<<" " <<(*b_it).A1.C.m_y<<endl;
+       biarcFile<<"A2"<<endl;
+       biarcFile<<(*b_it).A2.P1.m_x<<" " <<(*b_it).A2.P1.m_y<<endl;
+       biarcFile<<(*b_it).A2.P2.m_x<<" " <<(*b_it).A2.P2.m_y<<endl;
+       biarcFile<<(*b_it).A2.C.m_x<<" " <<(*b_it).A2.C.m_y<<endl;
     }
-    new_img->save("C:/Users/Thinkpad/Pictures/edge.jpg");
-    bit_img->save("C:/Users/Thinkpad/Pictures/bit.bmp");
-    bright_img->save("C:/Users/Thinkpad/Pictures/bright.bmp");
+    biarcFile.close();
+    qDebug()<<"test end";
 }
 
 bool GraphicsView::importImage(const QString &fileName)
